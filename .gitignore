@@ -1,0 +1,17 @@
+node_modules/
+dist/
+release/
+
+# Secrets: only the *.example files belong in version control.
+.env
+.env.local
+.env.*.local
+.env.desktop
+
+# Python bytecode from scripts/build_dish_library.py
+__pycache__/
+*.pyc
+
+*.log
+.DS_Store
+Thumbs.db

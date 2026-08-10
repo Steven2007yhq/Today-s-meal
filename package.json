@@ -1,0 +1,107 @@
+{
+  "name": "jin-tian-chi-sha",
+  "version": "1.0.4",
+  "private": true,
+  "author": "好吃的今天产品团队",
+  "description": "面向中国家庭的智能饮食规划 Windows 桌面应用",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "app": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "pack:win": "npm run build && electron-builder --win nsis",
+    "recipes:build": "python scripts/build_dish_library.py --sources scripts/recipe_sources.json --output src/data/crawledDishLibrary.json",
+    "catalog:build": "npm run db:migrate && node scripts/build_figure_catalog.mjs",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "db:migrate": "node server/migrate.mjs",
+    "server": "node server/index.mjs",
+    "server:dev": "node --watch server/index.mjs",
+    "images:migrate": "node scripts/upload_local_dish_images.mjs",
+    "images:figure": "node scripts/upload_figure_images.mjs",
+    "catalog:seasonal": "node scripts/sync_seasonal_catalog.mjs"
+  },
+  "dependencies": {
+    "cors": "latest",
+    "dotenv": "latest",
+    "express": "latest",
+    "helmet": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "lucide-react": "latest",
+    "minio": "latest",
+    "multer": "latest",
+    "pg": "latest",
+    "sharp": "latest"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "latest",
+    "concurrently": "latest",
+    "electron": "latest",
+    "electron-builder": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "wait-on": "latest"
+  },
+  "build": {
+    "appId": "cn.jintianchisha.desktop",
+    "productName": "好吃的今天",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "prompts/**/*",
+      "scripts/**/*",
+      "README.md",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "README.md",
+        "to": "README.md"
+      },
+      {
+        "from": "scripts",
+        "to": "scripts"
+      },
+      {
+        "from": "server",
+        "to": "server"
+      },
+      {
+        "from": "database/migrations",
+        "to": "database/migrations"
+      },
+      {
+        "from": "docs",
+        "to": "docs"
+      },
+      {
+        "from": "docker-compose.yml",
+        "to": "docker-compose.yml"
+      },
+      {
+        "from": ".env.example",
+        "to": ".env.example"
+      },
+      {
+        "from": ".env.desktop.example",
+        "to": ".env.desktop.example"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "好吃的今天-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

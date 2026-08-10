@@ -1,0 +1,62 @@
+name: jintianchisha
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: jintianchisha-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-jintianchisha}
+      POSTGRES_USER: ${POSTGRES_USER:-mealapp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mealapp_dev_password}
+    ports:
+      - "${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mealapp} -d ${POSTGRES_DB:-jintianchisha}"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+
+  minio:
+    image: minio/minio:latest
+    container_name: jintianchisha-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-mealapp_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-mealapp_minio_dev_password}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: jintianchisha-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-mealapp_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-mealapp_minio_dev_password}
+      MINIO_BUCKET: ${MINIO_BUCKET:-dish-images}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+      mc mb --ignore-existing local/$$MINIO_BUCKET;
+      mc anonymous set none local/$$MINIO_BUCKET;
+      echo 'Private MinIO bucket is ready.';
+      "
+    restart: "no"
+
+volumes:
+  postgres_data:
+  minio_data:

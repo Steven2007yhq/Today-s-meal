@@ -1,0 +1,2335 @@
+{
+  "generatedAt": "2026-08-05T07:43:58.356Z",
+  "sourceImageCount": 73,
+  "dishHash": {
+    "figure2-001": {
+      "id": "figure2-001",
+      "name": "凉拌木耳",
+      "cuisine": "家常菜",
+      "method": "拌",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "木耳",
+          "grams": 150
+        },
+        {
+          "name": "洋葱",
+          "grams": 40
+        },
+        {
+          "name": "香菜",
+          "grams": 10
+        },
+        {
+          "name": "香醋",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 81.7,
+        "protein": 6.1,
+        "carbs": 15.5,
+        "fat": 1.3,
+        "fiber": 7,
+        "sodium": 49.5
+      },
+      "tags": [
+        "家常菜",
+        "拌",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-003": {
+      "id": "figure2-003",
+      "name": "辣子鸡",
+      "cuisine": "川菜",
+      "method": "炸",
+      "taste": [
+        "香辣",
+        "酥香"
+      ],
+      "ingredients": [
+        {
+          "name": "鸡肉",
+          "grams": 220
+        },
+        {
+          "name": "干辣椒",
+          "grams": 25
+        },
+        {
+          "name": "花椒",
+          "grams": 6
+        },
+        {
+          "name": "淀粉",
+          "grams": 20
+        },
+        {
+          "name": "食用油",
+          "grams": 20
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 732.6,
+        "protein": 56.1,
+        "carbs": 20.6,
+        "fat": 47,
+        "fiber": 1.2,
+        "sodium": 193.8
+      },
+      "tags": [
+        "川菜",
+        "炸",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-004": {
+      "id": "figure2-004",
+      "name": "肉末豆腐",
+      "cuisine": "家常菜",
+      "method": "烧",
+      "taste": [
+        "咸鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "嫩豆腐",
+          "grams": 250
+        },
+        {
+          "name": "猪肉",
+          "grams": 80
+        },
+        {
+          "name": "豆瓣酱",
+          "grams": 12
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 644,
+        "protein": 56.4,
+        "carbs": 24.6,
+        "fat": 39.6,
+        "fiber": 5.5,
+        "sodium": 602.2
+      },
+      "tags": [
+        "家常菜",
+        "烧",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-005": {
+      "id": "figure2-005",
+      "name": "肉末茄子",
+      "cuisine": "家常菜",
+      "method": "烧",
+      "taste": [
+        "咸鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "茄子",
+          "grams": 220
+        },
+        {
+          "name": "猪肉",
+          "grams": 80
+        },
+        {
+          "name": "大蒜",
+          "grams": 10
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 333.1,
+        "protein": 25.3,
+        "carbs": 16.3,
+        "fat": 19.5,
+        "fiber": 6,
+        "sodium": 139.2
+      },
+      "tags": [
+        "家常菜",
+        "烧",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-006": {
+      "id": "figure2-006",
+      "name": "醋溜白菜",
+      "cuisine": "家常菜",
+      "method": "熘",
+      "taste": [
+        "酸甜"
+      ],
+      "ingredients": [
+        {
+          "name": "白菜",
+          "grams": 260
+        },
+        {
+          "name": "香醋",
+          "grams": 18
+        },
+        {
+          "name": "干辣椒",
+          "grams": 5
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 190.7,
+        "protein": 6,
+        "carbs": 18.4,
+        "fat": 11.5,
+        "fiber": 7.3,
+        "sodium": 92.2
+      },
+      "tags": [
+        "家常菜",
+        "熘",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-007": {
+      "id": "figure2-007",
+      "name": "木须肉",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "猪肉",
+          "grams": 120
+        },
+        {
+          "name": "鸡蛋",
+          "grams": 100
+        },
+        {
+          "name": "木耳",
+          "grams": 40
+        },
+        {
+          "name": "黄瓜",
+          "grams": 80
+        },
+        {
+          "name": "胡萝卜",
+          "grams": 40
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        }
+      ],
+      "nutrition": {
+        "calories": 515.3,
+        "protein": 46.6,
+        "carbs": 12,
+        "fat": 32.7,
+        "fiber": 4.4,
+        "sodium": 260
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-008": {
+      "id": "figure2-008",
+      "name": "白灼虾",
+      "cuisine": "粤菜",
+      "method": "白灼",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "基围虾",
+          "grams": 260
+        },
+        {
+          "name": "生姜",
+          "grams": 10
+        },
+        {
+          "name": "酱油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 295.4,
+        "protein": 53,
+        "carbs": 11,
+        "fat": 5.8,
+        "fiber": 0.3,
+        "sodium": 493.6
+      },
+      "tags": [
+        "粤菜",
+        "白灼",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-009": {
+      "id": "figure2-009",
+      "name": "鱼香肉丝",
+      "cuisine": "川菜",
+      "method": "炒",
+      "taste": [
+        "香辣"
+      ],
+      "ingredients": [
+        {
+          "name": "猪里脊",
+          "grams": 160
+        },
+        {
+          "name": "木耳",
+          "grams": 40
+        },
+        {
+          "name": "青椒",
+          "grams": 60
+        },
+        {
+          "name": "胡萝卜",
+          "grams": 50
+        },
+        {
+          "name": "豆瓣酱",
+          "grams": 15
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        }
+      ],
+      "nutrition": {
+        "calories": 471.6,
+        "protein": 44.3,
+        "carbs": 12.1,
+        "fat": 28,
+        "fiber": 4.5,
+        "sodium": 713
+      },
+      "tags": [
+        "川菜",
+        "炒",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-012": {
+      "id": "figure2-012",
+      "name": "木耳炒山药",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "山药",
+          "grams": 200
+        },
+        {
+          "name": "木耳",
+          "grams": 50
+        },
+        {
+          "name": "青椒",
+          "grams": 40
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 242.6,
+        "protein": 6.5,
+        "carbs": 31.1,
+        "fat": 11.1,
+        "fiber": 4.5,
+        "sodium": 65.1
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "家常好味"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-013": {
+      "id": "figure2-013",
+      "name": "干煸豆角",
+      "cuisine": "川菜",
+      "method": "煸炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "四季豆",
+          "grams": 220
+        },
+        {
+          "name": "猪肉",
+          "grams": 60
+        },
+        {
+          "name": "干辣椒",
+          "grams": 8
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 285.9,
+        "protein": 19.9,
+        "carbs": 15,
+        "fat": 17.2,
+        "fiber": 5.9,
+        "sodium": 116.2
+      },
+      "tags": [
+        "川菜",
+        "煸炒",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-014": {
+      "id": "figure2-014",
+      "name": "孜然羊肉",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "羊肉",
+          "grams": 200
+        },
+        {
+          "name": "洋葱",
+          "grams": 60
+        },
+        {
+          "name": "青椒",
+          "grams": 50
+        },
+        {
+          "name": "孜然",
+          "grams": 6
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 555.9,
+        "protein": 56.7,
+        "carbs": 8.2,
+        "fat": 32.7,
+        "fiber": 3.1,
+        "sodium": 193.8
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-015": {
+      "id": "figure2-015",
+      "name": "手撕鸡",
+      "cuisine": "家常菜",
+      "method": "拌",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "鸡肉",
+          "grams": 220
+        },
+        {
+          "name": "黄瓜",
+          "grams": 80
+        },
+        {
+          "name": "洋葱",
+          "grams": 40
+        },
+        {
+          "name": "麻酱",
+          "grams": 15
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 545.7,
+        "protein": 59,
+        "carbs": 12.3,
+        "fat": 28.7,
+        "fiber": 3.5,
+        "sodium": 801.2
+      },
+      "tags": [
+        "家常菜",
+        "拌",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-018": {
+      "id": "figure2-018",
+      "name": "酸菜炖排骨",
+      "cuisine": "东北菜",
+      "method": "炖",
+      "taste": [
+        "酸甜",
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "猪排骨",
+          "grams": 250
+        },
+        {
+          "name": "酸菜",
+          "grams": 150
+        },
+        {
+          "name": "粉条",
+          "grams": 50
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 979.8,
+        "protein": 51.7,
+        "carbs": 35.4,
+        "fat": 69.6,
+        "fiber": 5,
+        "sodium": 286.7
+      },
+      "tags": [
+        "东北菜",
+        "炖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-019": {
+      "id": "figure2-019",
+      "name": "手撕包菜",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "包菜",
+          "grams": 260
+        },
+        {
+          "name": "干辣椒",
+          "grams": 6
+        },
+        {
+          "name": "大蒜",
+          "grams": 10
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 187.9,
+        "protein": 5.9,
+        "carbs": 17.9,
+        "fat": 11.4,
+        "fiber": 7.1,
+        "sodium": 90.8
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-020": {
+      "id": "figure2-020",
+      "name": "冬瓜炖排骨",
+      "cuisine": "家常菜",
+      "method": "炖",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "猪排骨",
+          "grams": 240
+        },
+        {
+          "name": "冬瓜",
+          "grams": 220
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 855.2,
+        "protein": 48.3,
+        "carbs": 15.6,
+        "fat": 66.2,
+        "fiber": 5.7,
+        "sodium": 289.2
+      },
+      "tags": [
+        "家常菜",
+        "炖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-021": {
+      "id": "figure2-021",
+      "name": "黑椒牛柳",
+      "cuisine": "粤菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "牛肉",
+          "grams": 190
+        },
+        {
+          "name": "洋葱",
+          "grams": 70
+        },
+        {
+          "name": "青椒",
+          "grams": 60
+        },
+        {
+          "name": "黑胡椒",
+          "grams": 5
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 540.9,
+        "protein": 54.4,
+        "carbs": 9.3,
+        "fat": 31.7,
+        "fiber": 3.5,
+        "sodium": 192.1
+      },
+      "tags": [
+        "粤菜",
+        "炒",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-022": {
+      "id": "figure2-022",
+      "name": "萝卜排骨汤",
+      "cuisine": "家常菜",
+      "method": "炖",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "猪排骨",
+          "grams": 240
+        },
+        {
+          "name": "白萝卜",
+          "grams": 220
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 855.2,
+        "protein": 48.3,
+        "carbs": 15.6,
+        "fat": 66.2,
+        "fiber": 5.7,
+        "sodium": 289.2
+      },
+      "tags": [
+        "家常菜",
+        "炖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-023": {
+      "id": "figure2-023",
+      "name": "芹菜肉丝",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "芹菜",
+          "grams": 200
+        },
+        {
+          "name": "猪肉",
+          "grams": 120
+        },
+        {
+          "name": "红椒",
+          "grams": 20
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 405.1,
+        "protein": 35.1,
+        "carbs": 15.6,
+        "fat": 23.4,
+        "fiber": 5.7,
+        "sodium": 163.2
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-024": {
+      "id": "figure2-024",
+      "name": "油豆腐烧肉",
+      "cuisine": "家常菜",
+      "method": "烧",
+      "taste": [
+        "咸鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "油豆腐",
+          "grams": 160
+        },
+        {
+          "name": "五花肉",
+          "grams": 150
+        },
+        {
+          "name": "青蒜",
+          "grams": 20
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 825.1,
+        "protein": 50.5,
+        "carbs": 16.4,
+        "fat": 63.9,
+        "fiber": 3.9,
+        "sodium": 200.7
+      },
+      "tags": [
+        "家常菜",
+        "烧",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-025": {
+      "id": "figure2-025",
+      "name": "蒜蓉油菜",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "油菜",
+          "grams": 250
+        },
+        {
+          "name": "大蒜",
+          "grams": 15
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 184.3,
+        "protein": 5.7,
+        "carbs": 17.3,
+        "fat": 11.4,
+        "fiber": 6.8,
+        "sodium": 87.6
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-028": {
+      "id": "figure2-028",
+      "name": "蚝油油麦菜",
+      "cuisine": "粤菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "油麦菜",
+          "grams": 250
+        },
+        {
+          "name": "蚝油",
+          "grams": 15
+        },
+        {
+          "name": "大蒜",
+          "grams": 10
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 210.8,
+        "protein": 6.5,
+        "carbs": 19.6,
+        "fat": 12.7,
+        "fiber": 7,
+        "sodium": 656.6
+      },
+      "tags": [
+        "粤菜",
+        "炒",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-030": {
+      "id": "figure2-030",
+      "name": "香煎带鱼",
+      "cuisine": "家常菜",
+      "method": "煎",
+      "taste": [
+        "酥香"
+      ],
+      "ingredients": [
+        {
+          "name": "带鱼",
+          "grams": 250
+        },
+        {
+          "name": "淀粉",
+          "grams": 20
+        },
+        {
+          "name": "柠檬",
+          "grams": 15
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 494,
+        "protein": 56.1,
+        "carbs": 20.5,
+        "fat": 20.6,
+        "fiber": 0.7,
+        "sodium": 188.2
+      },
+      "tags": [
+        "家常菜",
+        "煎",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-032": {
+      "id": "figure2-032",
+      "name": "韭菜煎蛋",
+      "cuisine": "家常菜",
+      "method": "煎",
+      "taste": [
+        "酥香"
+      ],
+      "ingredients": [
+        {
+          "name": "鸡蛋",
+          "grams": 150
+        },
+        {
+          "name": "韭菜",
+          "grams": 90
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 344.6,
+        "protein": 21.7,
+        "carbs": 9.6,
+        "fat": 25.6,
+        "fiber": 2.4,
+        "sodium": 246.6
+      },
+      "tags": [
+        "家常菜",
+        "煎",
+        "家常好味"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-033": {
+      "id": "figure2-033",
+      "name": "啤酒鸭",
+      "cuisine": "家常菜",
+      "method": "焖",
+      "taste": [
+        "咸鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "鸭肉",
+          "grams": 260
+        },
+        {
+          "name": "土豆",
+          "grams": 150
+        },
+        {
+          "name": "青椒",
+          "grams": 50
+        },
+        {
+          "name": "啤酒",
+          "grams": 120
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 912.3,
+        "protein": 46.3,
+        "carbs": 37.8,
+        "fat": 60.3,
+        "fiber": 5.1,
+        "sodium": 224.6
+      },
+      "tags": [
+        "家常菜",
+        "焖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-034": {
+      "id": "figure2-034",
+      "name": "花甲粉丝",
+      "cuisine": "家常菜",
+      "method": "煮",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "花蛤",
+          "grams": 260
+        },
+        {
+          "name": "粉丝",
+          "grams": 80
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 465.4,
+        "protein": 57.2,
+        "carbs": 47.4,
+        "fat": 7,
+        "fiber": 1.7,
+        "sodium": 493.6
+      },
+      "tags": [
+        "家常菜",
+        "煮",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-036": {
+      "id": "figure2-036",
+      "name": "黄焖鸡",
+      "cuisine": "鲁菜",
+      "method": "焖",
+      "taste": [
+        "咸鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "鸡肉",
+          "grams": 240
+        },
+        {
+          "name": "土豆",
+          "grams": 150
+        },
+        {
+          "name": "香菇",
+          "grams": 60
+        },
+        {
+          "name": "青椒",
+          "grams": 40
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 768.1,
+        "protein": 66,
+        "carbs": 37.8,
+        "fat": 39.9,
+        "fiber": 7,
+        "sodium": 234.6
+      },
+      "tags": [
+        "鲁菜",
+        "焖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-038": {
+      "id": "figure2-038",
+      "name": "清炒油麦菜",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "油麦菜",
+          "grams": 260
+        },
+        {
+          "name": "大蒜",
+          "grams": 10
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 185.5,
+        "protein": 5.8,
+        "carbs": 17.5,
+        "fat": 11.4,
+        "fiber": 6.9,
+        "sodium": 89.6
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-039": {
+      "id": "figure2-039",
+      "name": "豆腐鲫鱼汤",
+      "cuisine": "家常菜",
+      "method": "炖",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "鲫鱼",
+          "grams": 260
+        },
+        {
+          "name": "嫩豆腐",
+          "grams": 180
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 602.8,
+        "protein": 83.1,
+        "carbs": 16.8,
+        "fat": 25.3,
+        "fiber": 3.8,
+        "sodium": 242.2
+      },
+      "tags": [
+        "家常菜",
+        "炖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-040": {
+      "id": "figure2-040",
+      "name": "萝卜炖牛腩",
+      "cuisine": "家常菜",
+      "method": "炖",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "牛腩",
+          "grams": 220
+        },
+        {
+          "name": "白萝卜",
+          "grams": 220
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 593.2,
+        "protein": 57.9,
+        "carbs": 15.6,
+        "fat": 34.4,
+        "fiber": 5.7,
+        "sodium": 239.2
+      },
+      "tags": [
+        "家常菜",
+        "炖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-041": {
+      "id": "figure2-041",
+      "name": "豆角焖肉",
+      "cuisine": "东北菜",
+      "method": "焖",
+      "taste": [
+        "咸鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "豆角",
+          "grams": 200
+        },
+        {
+          "name": "五花肉",
+          "grams": 150
+        },
+        {
+          "name": "土豆",
+          "grams": 80
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 721.1,
+        "protein": 33.3,
+        "carbs": 30.4,
+        "fat": 52,
+        "fiber": 7.2,
+        "sodium": 213.1
+      },
+      "tags": [
+        "东北菜",
+        "焖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-042": {
+      "id": "figure2-042",
+      "name": "香煎小黄鱼",
+      "cuisine": "家常菜",
+      "method": "煎",
+      "taste": [
+        "酥香"
+      ],
+      "ingredients": [
+        {
+          "name": "小黄鱼",
+          "grams": 250
+        },
+        {
+          "name": "淀粉",
+          "grams": 18
+        },
+        {
+          "name": "柠檬",
+          "grams": 15
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 487,
+        "protein": 56.1,
+        "carbs": 18.8,
+        "fat": 20.6,
+        "fiber": 0.7,
+        "sodium": 188
+      },
+      "tags": [
+        "家常菜",
+        "煎",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-043": {
+      "id": "figure2-043",
+      "name": "鸡汤面",
+      "cuisine": "主食小吃",
+      "method": "煮",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "面条",
+          "grams": 190
+        },
+        {
+          "name": "鸡肉",
+          "grams": 90
+        },
+        {
+          "name": "青菜",
+          "grams": 70
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 665.2,
+        "protein": 36,
+        "carbs": 97.8,
+        "fat": 15.4,
+        "fiber": 5.8,
+        "sodium": 150.2
+      },
+      "tags": [
+        "主食小吃",
+        "煮",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-045": {
+      "id": "figure2-045",
+      "name": "冬瓜虾皮汤",
+      "cuisine": "家常菜",
+      "method": "煮",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "冬瓜",
+          "grams": 240
+        },
+        {
+          "name": "虾皮",
+          "grams": 15
+        },
+        {
+          "name": "小葱",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 108,
+        "protein": 8.5,
+        "carbs": 17,
+        "fat": 1.7,
+        "fiber": 6.2,
+        "sodium": 116.6
+      },
+      "tags": [
+        "家常菜",
+        "煮",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-048": {
+      "id": "figure2-048",
+      "name": "酸椒肉丝",
+      "cuisine": "湘菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "猪肉",
+          "grams": 150
+        },
+        {
+          "name": "酸豆角",
+          "grams": 120
+        },
+        {
+          "name": "小米椒",
+          "grams": 15
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 436.1,
+        "protein": 40.9,
+        "carbs": 10.6,
+        "fat": 26.1,
+        "fiber": 3.7,
+        "sodium": 155.7
+      },
+      "tags": [
+        "湘菜",
+        "炒",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-049": {
+      "id": "figure2-049",
+      "name": "蒜苔炒肉",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "蒜苔",
+          "grams": 200
+        },
+        {
+          "name": "猪肉",
+          "grams": 130
+        },
+        {
+          "name": "红椒",
+          "grams": 15
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 422.5,
+        "protein": 37.5,
+        "carbs": 15.3,
+        "fat": 24.3,
+        "fiber": 5.6,
+        "sodium": 168.2
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-050": {
+      "id": "figure2-050",
+      "name": "凉拌三丝",
+      "cuisine": "家常菜",
+      "method": "拌",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "土豆",
+          "grams": 120
+        },
+        {
+          "name": "胡萝卜",
+          "grams": 80
+        },
+        {
+          "name": "青椒",
+          "grams": 60
+        },
+        {
+          "name": "香醋",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 163.6,
+        "protein": 5.8,
+        "carbs": 34.4,
+        "fat": 1.3,
+        "fiber": 7,
+        "sodium": 63.6
+      },
+      "tags": [
+        "家常菜",
+        "拌",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-052": {
+      "id": "figure2-052",
+      "name": "萝卜丝汤",
+      "cuisine": "家常菜",
+      "method": "煮",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "白萝卜",
+          "grams": 220
+        },
+        {
+          "name": "虾皮",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 10
+        }
+      ],
+      "nutrition": {
+        "calories": 90,
+        "protein": 7.1,
+        "carbs": 14.6,
+        "fat": 1.3,
+        "fiber": 5.6,
+        "sodium": 95.6
+      },
+      "tags": [
+        "家常菜",
+        "煮",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-054": {
+      "id": "figure2-054",
+      "name": "凉拌黄瓜",
+      "cuisine": "家常菜",
+      "method": "拌",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "黄瓜",
+          "grams": 250
+        },
+        {
+          "name": "大蒜",
+          "grams": 12
+        },
+        {
+          "name": "香醋",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 98,
+        "protein": 5.8,
+        "carbs": 17.9,
+        "fat": 1.5,
+        "fiber": 7.1,
+        "sodium": 89.4
+      },
+      "tags": [
+        "家常菜",
+        "拌",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-055": {
+      "id": "figure2-055",
+      "name": "凉拌海带丝",
+      "cuisine": "家常菜",
+      "method": "拌",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "海带",
+          "grams": 200
+        },
+        {
+          "name": "胡萝卜",
+          "grams": 50
+        },
+        {
+          "name": "香菜",
+          "grams": 10
+        },
+        {
+          "name": "香醋",
+          "grams": 12
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 104.8,
+        "protein": 6.2,
+        "carbs": 18.8,
+        "fat": 1.6,
+        "fiber": 7.1,
+        "sodium": 99.6
+      },
+      "tags": [
+        "家常菜",
+        "拌",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-056": {
+      "id": "figure2-056",
+      "name": "白菜粉条炖肉",
+      "cuisine": "东北菜",
+      "method": "炖",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "白菜",
+          "grams": 220
+        },
+        {
+          "name": "粉条",
+          "grams": 90
+        },
+        {
+          "name": "五花肉",
+          "grams": 130
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 710.2,
+        "protein": 33.9,
+        "carbs": 58.8,
+        "fat": 38.3,
+        "fiber": 7.5,
+        "sodium": 213.7
+      },
+      "tags": [
+        "东北菜",
+        "炖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-057": {
+      "id": "figure2-057",
+      "name": "蚝油生菜",
+      "cuisine": "粤菜",
+      "method": "白灼",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "生菜",
+          "grams": 260
+        },
+        {
+          "name": "蚝油",
+          "grams": 15
+        },
+        {
+          "name": "大蒜",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 124.1,
+        "protein": 6.7,
+        "carbs": 20.2,
+        "fat": 2.7,
+        "fiber": 7.2,
+        "sodium": 659.6
+      },
+      "tags": [
+        "粤菜",
+        "白灼",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-058": {
+      "id": "figure2-058",
+      "name": "清炒白菜",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "白菜",
+          "grams": 280
+        },
+        {
+          "name": "大蒜",
+          "grams": 10
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 191.9,
+        "protein": 6.2,
+        "carbs": 18.7,
+        "fat": 11.5,
+        "fiber": 7.4,
+        "sodium": 95.6
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "膳食纤维"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-059": {
+      "id": "figure2-059",
+      "name": "酸菜鱼",
+      "cuisine": "川菜",
+      "method": "煮",
+      "taste": [
+        "酸甜",
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "黑鱼片",
+          "grams": 260
+        },
+        {
+          "name": "酸菜",
+          "grams": 150
+        },
+        {
+          "name": "泡椒",
+          "grams": 20
+        },
+        {
+          "name": "花椒",
+          "grams": 5
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 399.8,
+        "protein": 61.4,
+        "carbs": 13.2,
+        "fat": 11.7,
+        "fiber": 4.7,
+        "sodium": 238.2
+      },
+      "tags": [
+        "川菜",
+        "煮",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-061": {
+      "id": "figure2-061",
+      "name": "毛血旺",
+      "cuisine": "川菜",
+      "method": "煮",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "鸭血",
+          "grams": 180
+        },
+        {
+          "name": "毛肚",
+          "grams": 100
+        },
+        {
+          "name": "午餐肉",
+          "grams": 80
+        },
+        {
+          "name": "黄豆芽",
+          "grams": 100
+        },
+        {
+          "name": "干辣椒",
+          "grams": 15
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 514.4,
+        "protein": 45.9,
+        "carbs": 15.5,
+        "fat": 29.6,
+        "fiber": 3.1,
+        "sodium": 1122.6
+      },
+      "tags": [
+        "川菜",
+        "煮",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-062": {
+      "id": "figure2-062",
+      "name": "土豆焖鸭",
+      "cuisine": "家常菜",
+      "method": "焖",
+      "taste": [
+        "咸鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "鸭肉",
+          "grams": 250
+        },
+        {
+          "name": "土豆",
+          "grams": 180
+        },
+        {
+          "name": "青椒",
+          "grams": 40
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 869.5,
+        "protein": 44.8,
+        "carbs": 39.6,
+        "fat": 58.4,
+        "fiber": 5.6,
+        "sodium": 211
+      },
+      "tags": [
+        "家常菜",
+        "焖",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-065": {
+      "id": "figure2-065",
+      "name": "葱爆羊肉",
+      "cuisine": "家常菜",
+      "method": "爆",
+      "taste": [
+        "酥香"
+      ],
+      "ingredients": [
+        {
+          "name": "羊肉",
+          "grams": 200
+        },
+        {
+          "name": "大葱",
+          "grams": 120
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 565.1,
+        "protein": 57.1,
+        "carbs": 9.6,
+        "fat": 33,
+        "fiber": 3.2,
+        "sodium": 205.2
+      },
+      "tags": [
+        "家常菜",
+        "爆",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-066": {
+      "id": "figure2-066",
+      "name": "梅菜扣肉",
+      "cuisine": "粤菜",
+      "method": "蒸",
+      "taste": [
+        "清鲜"
+      ],
+      "ingredients": [
+        {
+          "name": "五花肉",
+          "grams": 220
+        },
+        {
+          "name": "梅干菜",
+          "grams": 90
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        },
+        {
+          "name": "小葱",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 749.6,
+        "protein": 42.1,
+        "carbs": 7.8,
+        "fat": 60.2,
+        "fiber": 2.5,
+        "sodium": 233.2
+      },
+      "tags": [
+        "粤菜",
+        "蒸",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-067": {
+      "id": "figure2-067",
+      "name": "回锅肉",
+      "cuisine": "川菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "五花肉",
+          "grams": 200
+        },
+        {
+          "name": "蒜苗",
+          "grams": 90
+        },
+        {
+          "name": "青椒",
+          "grams": 50
+        },
+        {
+          "name": "豆瓣酱",
+          "grams": 15
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 811.6,
+        "protein": 40.1,
+        "carbs": 12.3,
+        "fat": 66.1,
+        "fiber": 3.9,
+        "sodium": 791.6
+      },
+      "tags": [
+        "川菜",
+        "炒",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    },
+    "figure2-068": {
+      "id": "figure2-068",
+      "name": "京酱肉丝",
+      "cuisine": "家常菜",
+      "method": "炒",
+      "taste": [
+        "家常鲜香"
+      ],
+      "ingredients": [
+        {
+          "name": "猪里脊",
+          "grams": 180
+        },
+        {
+          "name": "甜面酱",
+          "grams": 25
+        },
+        {
+          "name": "大葱",
+          "grams": 60
+        },
+        {
+          "name": "豆腐皮",
+          "grams": 40
+        },
+        {
+          "name": "食用油",
+          "grams": 10
+        },
+        {
+          "name": "生姜",
+          "grams": 12
+        }
+      ],
+      "nutrition": {
+        "calories": 565,
+        "protein": 53.7,
+        "carbs": 12.5,
+        "fat": 33.9,
+        "fiber": 2.9,
+        "sodium": 1106.6
+      },
+      "tags": [
+        "家常菜",
+        "炒",
+        "高蛋白"
+      ],
+      "source": "figure2",
+      "image": ""
+    }
+  },
+  "nameHash": {
+    "凉拌木耳": "figure2-001",
+    "辣子鸡": "figure2-003",
+    "肉末豆腐": "figure2-004",
+    "肉末茄子": "figure2-005",
+    "醋溜白菜": "figure2-006",
+    "木须肉": "figure2-007",
+    "白灼虾": "figure2-008",
+    "鱼香肉丝": "figure2-009",
+    "木耳炒山药": "figure2-012",
+    "干煸豆角": "figure2-013",
+    "孜然羊肉": "figure2-014",
+    "手撕鸡": "figure2-015",
+    "酸菜炖排骨": "figure2-018",
+    "手撕包菜": "figure2-019",
+    "冬瓜炖排骨": "figure2-020",
+    "黑椒牛柳": "figure2-021",
+    "萝卜排骨汤": "figure2-022",
+    "芹菜肉丝": "figure2-023",
+    "油豆腐烧肉": "figure2-024",
+    "蒜蓉油菜": "figure2-025",
+    "蚝油油麦菜": "figure2-028",
+    "香煎带鱼": "figure2-030",
+    "韭菜煎蛋": "figure2-032",
+    "啤酒鸭": "figure2-033",
+    "花甲粉丝": "figure2-034",
+    "黄焖鸡": "figure2-036",
+    "清炒油麦菜": "figure2-038",
+    "豆腐鲫鱼汤": "figure2-039",
+    "萝卜炖牛腩": "figure2-040",
+    "豆角焖肉": "figure2-041",
+    "香煎小黄鱼": "figure2-042",
+    "鸡汤面": "figure2-043",
+    "冬瓜虾皮汤": "figure2-045",
+    "酸椒肉丝": "figure2-048",
+    "蒜苔炒肉": "figure2-049",
+    "凉拌三丝": "figure2-050",
+    "萝卜丝汤": "figure2-052",
+    "凉拌黄瓜": "figure2-054",
+    "凉拌海带丝": "figure2-055",
+    "白菜粉条炖肉": "figure2-056",
+    "蚝油生菜": "figure2-057",
+    "清炒白菜": "figure2-058",
+    "酸菜鱼": "figure2-059",
+    "毛血旺": "figure2-061",
+    "土豆焖鸭": "figure2-062",
+    "葱爆羊肉": "figure2-065",
+    "梅菜扣肉": "figure2-066",
+    "回锅肉": "figure2-067",
+    "京酱肉丝": "figure2-068"
+  },
+  "graphEdgeCount": 0
+}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f4ec" />
+    <title>好吃的今天 · 智能餐食管家</title>
+    <!-- Inlined so the loader paints before the CSS bundle and app script arrive. -->
+    <style>
+      #app-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 11px;
+        background: #eceae6;
+        transition: opacity 0.3s ease;
+      }
+      #app-loader.is-hidden { opacity: 0; pointer-events: none; }
+      #app-loader i {
+        display: block;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: #b4b0a8;
+        animation: app-loader-bounce 1.05s ease-in-out infinite;
+      }
+      #app-loader i:nth-child(2) { animation-delay: 0.16s; }
+      #app-loader i:nth-child(3) { animation-delay: 0.32s; }
+      @keyframes app-loader-bounce {
+        0%, 70%, 100% { transform: translateY(0); opacity: 0.5; }
+        35% { transform: translateY(-12px); opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #app-loader i { animation-duration: 2.6s; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app-loader" role="status" aria-live="polite" aria-label="加载中"><i></i><i></i><i></i></div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
