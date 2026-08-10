@@ -7,6 +7,7 @@ import helmet from 'helmet'
 import multer from 'multer'
 import sharp from 'sharp'
 import { config } from './config.mjs'
+import { assertStartupConfig } from './validate-config.mjs'
 import { pool, withTransaction } from './db.mjs'
 import { ensureImageBucket, getSignedImageUrl, putImage } from './storage.mjs'
 import { createDeepSeekGateway, normalizeClientId } from './ai-service.mjs'
@@ -26,6 +27,14 @@ import {
   validatePassword,
   verifyPassword,
 } from './auth-service.mjs'
+
+// Fail closed before anything opens a socket or a database connection.
+try {
+  assertStartupConfig(config)
+} catch (error) {
+  console.error(error.message)
+  process.exit(1)
+}
 
 const app = express()
 const promptDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../prompts')
