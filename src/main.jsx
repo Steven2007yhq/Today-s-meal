@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import AppErrorBoundary from './components/AppErrorBoundary'
 import './styles.css'
 
 // The loader markup lives in index.html so it paints before this bundle arrives.
@@ -18,7 +19,9 @@ function hideAppLoader() {
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
   </React.StrictMode>,
 )
 
