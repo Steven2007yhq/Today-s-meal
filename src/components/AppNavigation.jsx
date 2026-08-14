@@ -22,7 +22,7 @@ import { formatChinaHeader } from '../utils/chinaTime'
 const primaryNavigation = [
   { id: 'today', label: '好吃的今天', icon: Home },
   { id: 'calendar', label: '餐食日历', icon: CalendarDays },
-  { id: 'library', label: '八大菜系库', icon: Search },
+  { id: 'library', label: '中华菜品库', icon: Search },
   { id: 'report', label: '营养报告', icon: BarChart3 },
   { id: 'favorites', label: '我的收藏', icon: Heart },
 ]

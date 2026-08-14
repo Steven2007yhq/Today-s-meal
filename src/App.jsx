@@ -67,6 +67,7 @@ import { buildFitnessTrainingContext, createDefaultFitnessTrainingPlan, normaliz
 import { useFavoriteCatalog } from './hooks/useFavoriteCatalog'
 import { usePreloadedImages } from './hooks/usePreloadedImages'
 import { analyzeDishQuery, calculateDishPortion, getDishGraphStats, getRelatedDishes, searchDishes } from './services/dishEngine'
+import { listCatalogDishes, readCatalogFacets, readCatalogRelations } from './services/catalogApi'
 import { loginAccount, logoutAccount, readCurrentAuthSession, registerAccount, sendVerificationCode, startSocialLogin } from './services/authApi'
 import {
   completeDevelopmentOrder,
@@ -1150,27 +1151,74 @@ function FavoritesView({ onToast, onUseDish }) {
 function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
   const [query, setQuery] = useState('')
   const [cuisine, setCuisine] = useState('all')
+  const [region, setRegion] = useState('all')
+  const [dishType, setDishType] = useState('all')
+  const [catalogPage, setCatalogPage] = useState(1)
+  const [results, setResults] = useState(() => dishes.slice(0, 36))
+  const [pageInfo, setPageInfo] = useState({ page: 1, limit: 36, total: dishes.length, totalPages: Math.ceil(dishes.length / 36), hasNextPage: dishes.length > 36 })
+  const [facets, setFacets] = useState({ summary: { dishes: dishes.length, relations: getDishGraphStats().edges, sourceBacked: dishes.length }, cuisines: [], regions: [], dishTypes: [] })
+  const [catalogState, setCatalogState] = useState('loading')
+  const [relatedDishes, setRelatedDishes] = useState(() => getRelatedDishes(dishes[2]?.id, 6))
   const [selectedDish, setSelectedDish] = useState(dishes[2])
   const [mealType, setMealType] = useState('午餐')
   const [remoteImages, setRemoteImages] = useState({})
   const [isExportingPdf, setIsExportingPdf] = useState(false)
   const { favoriteByDishId, activeCollection, toggleFavorite } = useFavoriteCatalog()
   const searchInputRef = useRef(null)
-  const graphStats = getDishGraphStats()
   const searchAnalysis = useMemo(() => analyzeDishQuery(query), [query])
-  const results = useMemo(() => searchDishes(query, cuisine), [query, cuisine])
   const portion = selectedDish ? calculateDishPortion(selectedDish, mealHistory, mealType) : null
-  const relatedDishes = selectedDish ? getRelatedDishes(selectedDish.id, 6) : []
+  const availableCuisines = useMemo(() => {
+    const known = new Set(cuisineMeta.map((item) => item.id))
+    return [...cuisineMeta, ...facets.cuisines.filter((item) => !known.has(item.value)).map((item) => ({ id: item.value, name: item.value, emoji: '🍲' }))]
+  }, [facets.cuisines])
   const imageUrls = useMemo(() => [...new Set(results.map((dish) => dishImage(dish)).filter(Boolean).concat(selectedDish ? [dishImage(selectedDish, false)] : []))], [results, remoteImages, selectedDish])
   const imageReadyMap = usePreloadedImages(imageUrls)
 
   useEffect(() => {
-    let active = true
-    fetchDishImages(dishes.map((dish) => dish.id))
-      .then((images) => { if (active) setRemoteImages(images) })
-      .catch(() => { if (active) setRemoteImages({}) })
-    return () => { active = false }
+    const controller = new AbortController()
+    readCatalogFacets(controller.signal).then(setFacets).catch(() => {})
+    return () => controller.abort()
   }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => {
+      setCatalogState('loading')
+      listCatalogDishes({ query, cuisine, region, dishType, page: catalogPage, limit: 36 }, controller.signal)
+        .then((payload) => {
+          setResults(payload.dishes || [])
+          setPageInfo(payload.pageInfo)
+          setCatalogState('online')
+        })
+        .catch((error) => {
+          if (error.name === 'AbortError') return
+          const fallback = searchDishes(query, cuisine)
+          const start = (catalogPage - 1) * 36
+          setResults(fallback.slice(start, start + 36))
+          setPageInfo({ page: catalogPage, limit: 36, total: fallback.length, totalPages: Math.max(1, Math.ceil(fallback.length / 36)), hasNextPage: start + 36 < fallback.length })
+          setCatalogState('offline')
+        })
+    }, query ? 220 : 0)
+    return () => { controller.abort(); window.clearTimeout(timer) }
+  }, [catalogPage, cuisine, dishType, query, region])
+
+  useEffect(() => {
+    const visibleIds = [...results.map((dish) => dish.id), selectedDish?.id].filter(Boolean)
+    let active = true
+    fetchDishImages(visibleIds)
+      .then((images) => { if (active) setRemoteImages((current) => ({ ...current, ...images })) })
+      .catch(() => {})
+    return () => { active = false }
+  }, [results, selectedDish?.id])
+
+  useEffect(() => {
+    if (!selectedDish) { setRelatedDishes([]); return undefined }
+    const controller = new AbortController()
+    readCatalogRelations(selectedDish.id, 6, controller.signal)
+      .then((payload) => setRelatedDishes(payload.relations || []))
+      .catch((error) => { if (error.name !== 'AbortError') setRelatedDishes(getRelatedDishes(selectedDish.id, 6)) })
+    return () => controller.abort()
+  }, [selectedDish?.id])
 
   useEffect(() => {
     if (!focusRequest) return undefined
@@ -1221,8 +1269,8 @@ function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
 
   return (
     <div className="page-view library-page">
-      <section className="page-intro library-intro"><div><span className="section-kicker">DISH ATLAS · HASHED</span><h2>八大菜系，今天搜哪一味？</h2><p>菜品、食材、烹饪方式都已建立联系，搜到就能按你的饭量算一份。</p></div><div className="library-stats"><span><strong>{dishes.length}</strong><small>道种子菜</small></span><span><strong>{graphStats.edges}</strong><small>条搭配关系</small></span><span><strong>{Object.keys(remoteImages).length}</strong><small>张云端图</small></span></div></section>
-      <div className="library-searchbar"><Search size={18} /><input ref={searchInputRef} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape') { setQuery(''); event.currentTarget.blur() } }} placeholder="支持拼音缩写、食材、口味、做法：如 gbjd / 猪肉饺 / 低脂鸡胸…" aria-label="搜索菜名、食材、口味或烹饪方式" /><kbd>Ctrl K</kbd></div>
+      <section className="page-intro library-intro"><div><span className="section-kicker">CHINESE DISH ATLAS</span><h2>中华菜品库，今天搜哪一味？</h2><p>覆盖传统菜、家常菜、主食小吃与可组合搭配；配方来源和营养可信度会如实标明。</p></div><div className="library-stats"><span><strong>{facets.summary.dishes.toLocaleString('zh-CN')}</strong><small>道可搜索菜</small></span><span><strong>{facets.summary.relations.toLocaleString('zh-CN')}</strong><small>条精选关系</small></span><span><strong>{(facets.summary.sourceBacked || 0).toLocaleString('zh-CN')}</strong><small>条有来源配方</small></span></div></section>
+      <div className="library-searchbar"><Search size={18} /><input ref={searchInputRef} value={query} onChange={(event) => { setQuery(event.target.value); setCatalogPage(1) }} onKeyDown={(event) => { if (event.key === 'Escape') { setQuery(''); setCatalogPage(1); event.currentTarget.blur() } }} placeholder="搜菜名、食材、口味、做法：如 番茄 / 猪肉饺 / 清蒸…" aria-label="搜索菜名、食材、口味或烹饪方式" /><kbd>Ctrl K</kbd></div>
       {!searchAnalysis.isEmpty && (
         <div className="library-search-insight">
           <span>已智能提取</span>
@@ -1232,14 +1280,18 @@ function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
           <small>按菜名、食材、做法、口味、拼音/缩写综合排序</small>
         </div>
       )}
-      <div className="cuisine-chips">{cuisineMeta.map((item) => <button key={item.id} className={cuisine === item.id ? 'active' : ''} onClick={() => setCuisine(item.id)}><span>{item.emoji}</span>{item.name}</button>)}</div>
+      <div className="library-filter-row">
+        <div className="cuisine-chips">{availableCuisines.map((item) => <button key={item.id} className={cuisine === item.id ? 'active' : ''} onClick={() => { setCuisine(item.id); setCatalogPage(1) }}><span>{item.emoji}</span>{item.name}</button>)}</div>
+        <select value={region} onChange={(event) => { setRegion(event.target.value); setCatalogPage(1) }} aria-label="按地区筛选"><option value="all">全部地区</option>{facets.regions.map((item) => <option key={item.value} value={item.value}>{item.value} · {item.count}</option>)}</select>
+        <select value={dishType} onChange={(event) => { setDishType(event.target.value); setCatalogPage(1) }} aria-label="按类型筛选"><option value="all">全部类型</option>{facets.dishTypes.map((item) => <option key={item.value} value={item.value}>{item.value} · {item.count}</option>)}</select>
+      </div>
       <div className="library-layout">
         <section className="dish-results">
-          <div className="library-result-head"><span>找到 {results.length} 道好菜</span><button onClick={() => { setQuery(''); setCuisine('all') }}>清空筛选</button></div>
+          <div className="library-result-head"><span>找到 {pageInfo.total.toLocaleString('zh-CN')} 道好菜 <i className={`catalog-state ${catalogState}`}>{catalogState === 'online' ? '服务端目录' : catalogState === 'offline' ? '离线基础库' : '正在检索'}</i></span><button onClick={() => { setQuery(''); setCuisine('all'); setRegion('all'); setDishType('all'); setCatalogPage(1) }}>清空筛选</button></div>
           <div className="dish-card-grid">
             {results.map((dish) => {
               const imageUrl = dishImage(dish)
-              const imageReady = Boolean(imageReadyMap[imageUrl])
+              const imageReady = !imageUrl || Boolean(imageReadyMap[imageUrl])
               const isFavorited = favoriteByDishId.has(dish.id)
               return (
                 <article
@@ -1260,6 +1312,7 @@ function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
                     style={imageReady && imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
                   >
                     {!imageReady && <span className="image-skeleton-mark" />}
+                    {!imageUrl && <b className="dish-image-fallback">{dish.dishType === '主食' ? '🍜' : dish.dishType === '饮品' ? '🫖' : '🥘'}</b>}
                     <span>{dish.cuisine}</span>
                     <i>{remoteImages[dish.id] ? '☁ 云端' : dish.method}</i>
                     <button
@@ -1273,21 +1326,23 @@ function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
                   </div>
                   <div className="dish-card-copy">
                     <strong>{dish.name}</strong>
-                    <small>{dish.nutrition.calories} kcal · 蛋白 {dish.nutrition.protein}g</small>
+                    <small>{dish.nutritionConfidence === 'unverified' ? '营养待核验' : `${dish.nutrition.calories || 0} kcal · ${dish.nutritionConfidence === 'estimated' ? '营养估算' : `蛋白 ${dish.nutrition.protein || 0}g`}`}</small>
                     <div>{(dish.tags || ['新收录']).slice(0, 2).map((tag) => <em key={tag}>{tag}</em>)}</div>
                   </div>
                 </article>
               )
             })}
           </div>
+          {pageInfo.totalPages > 1 && <nav className="catalog-pagination" aria-label="菜品库分页"><button disabled={catalogPage <= 1 || catalogState === 'loading'} onClick={() => setCatalogPage((page) => Math.max(1, page - 1))}>上一页</button><span>第 {pageInfo.page} / {pageInfo.totalPages} 页</span><button disabled={!pageInfo.hasNextPage || catalogState === 'loading'} onClick={() => setCatalogPage((page) => page + 1)}>下一页</button></nav>}
           {!results.length && <div className="empty-library"><span>🍜</span><strong>这道菜还在后厨备菜</strong><small>换个关键词，或者等爬虫把它带回来。</small></div>}
         </section>
         {selectedDish && portion && <aside className="dish-detail panel-card">
           <div
-            className={`dish-detail-image ${imageReadyMap[dishImage(selectedDish, false)] ? 'is-ready' : 'is-loading'}`}
+            className={`dish-detail-image ${!dishImage(selectedDish, false) || imageReadyMap[dishImage(selectedDish, false)] ? 'is-ready' : 'is-loading'}`}
             style={imageReadyMap[dishImage(selectedDish, false)] ? { backgroundImage: `url(${dishImage(selectedDish, false)})` } : undefined}
           >
-            {!imageReadyMap[dishImage(selectedDish, false)] && <span className="image-skeleton-mark" />}
+            {dishImage(selectedDish, false) && !imageReadyMap[dishImage(selectedDish, false)] && <span className="image-skeleton-mark" />}
+            {!dishImage(selectedDish, false) && <b className="dish-detail-fallback">🥘</b>}
             <span>{selectedDish.cuisine} · {selectedDish.method}{remoteImages[selectedDish.id] ? ' · MinIO' : ''}</span>
             <button
               className={`favorite-pin ${favoriteByDishId.has(selectedDish.id) ? 'active' : ''}`}
@@ -1298,7 +1353,7 @@ function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
             </button>
             <button onClick={() => setSelectedDish(null)}><X size={16} /></button>
           </div>
-          <div className="dish-detail-copy"><span className="section-kicker">PORTION ENGINE</span><h3>{selectedDish.name}</h3><p>这份菜是 <strong>{(selectedDish.taste || ['经典']).join('、')}</strong> 风味，系统会按你过去的饭量动态换算。</p><div className="meal-type-switch">{['早餐', '午餐', '晚餐'].map((type) => <button className={mealType === type ? 'active' : ''} key={type} onClick={() => setMealType(type)}>{type}</button>)}</div><div className="portion-highlight"><span>建议系数<strong>{portion.multiplier}×</strong></span><span>单人热量<strong>{portion.nutrition.calories}<small> kcal</small></strong></span><span>蛋白质<strong>{portion.nutrition.protein}<small> g</small></strong></span></div><div className="ingredient-list"><strong>这顿要准备</strong>{portion.ingredients.slice(0, 5).map((ingredient) => <span key={ingredient.name}><em>{ingredient.name}</em><b>{ingredient.grams}g</b></span>)}</div><small className="portion-reason"><Sparkles size={13} /> {portion.reason}</small><div className="dish-detail-actions"><button className="primary-full" onClick={() => onUseDish({ ...selectedDish, image: dishImage(selectedDish, false) }, mealType)}>按我的饭量加入{mealType} <Plus size={16} /></button><button className="outline-full" onClick={exportSelectedRecipe} disabled={isExportingPdf}><FileDown size={15} /> {isExportingPdf ? '正在生成 PDF…' : '导出这份食谱 PDF'}</button></div></div>
+          <div className="dish-detail-copy"><span className="section-kicker">PORTION ENGINE</span><h3>{selectedDish.name}</h3><p>这份菜是 <strong>{(selectedDish.taste || ['经典']).join('、')}</strong> 风味，系统会按你过去的饭量动态换算。</p><div className={`dish-evidence ${selectedDish.reviewStatus || 'candidate'}`}>{selectedDish.reviewStatus === 'generated' ? '家常搭配 · 组合规则生成' : selectedDish.source === 'howtocook' ? '开源配方 · 来源可追溯' : selectedDish.reviewStatus === 'candidate' || !selectedDish.reviewStatus ? '候选配方 · 待人工复核' : '项目配方 · 已审阅'}<small>{selectedDish.nutritionConfidence === 'unverified' ? '营养数据待核验' : selectedDish.nutritionConfidence === 'verified' || selectedDish.nutritionConfidence === 'source_estimate' ? '营养数据来自可信来源' : '营养数据为估算值'}</small>{selectedDish.sourceUrl && <a href={selectedDish.sourceUrl} target="_blank" rel="noreferrer">查看配方来源 ↗</a>}</div><div className="meal-type-switch">{['早餐', '午餐', '晚餐'].map((type) => <button className={mealType === type ? 'active' : ''} key={type} onClick={() => setMealType(type)}>{type}</button>)}</div><div className="portion-highlight"><span>建议系数<strong>{portion.multiplier}×</strong></span><span>单人热量<strong>{portion.nutrition.calories}<small> kcal</small></strong></span><span>蛋白质<strong>{portion.nutrition.protein}<small> g</small></strong></span></div><div className="ingredient-list"><strong>这顿要准备</strong>{portion.ingredients.slice(0, 5).map((ingredient) => <span key={ingredient.name}><em>{ingredient.name}</em><b>{ingredient.grams}g</b></span>)}</div><small className="portion-reason"><Sparkles size={13} /> {portion.reason}</small><div className="dish-detail-actions"><button className="primary-full" onClick={() => onUseDish({ ...selectedDish, image: dishImage(selectedDish, false) }, mealType)}>按我的饭量加入{mealType} <Plus size={16} /></button><button className="outline-full" onClick={exportSelectedRecipe} disabled={isExportingPdf}><FileDown size={15} /> {isExportingPdf ? '正在生成 PDF…' : '导出这份食谱 PDF'}</button></div></div>
           <div className="relation-map"><div className="relation-map-head"><strong>这道菜和谁有关系？</strong><small>食材 · 做法 · 风味 · 菜系</small></div><div className="relation-canvas"><svg className="relation-lines" viewBox="0 0 320 210" preserveAspectRatio="none" aria-hidden="true">{relatedDishes.map((relatedDish, index) => { const point = relationNodeLayout[index]; return <g key={relatedDish.id}><line x1="160" y1="105" x2={point.x} y2={point.y} /><circle cx={point.x} cy={point.y} r="3" /><text x={(160 + point.x) / 2} y={(105 + point.y) / 2 - 4}>{relatedDish.relationScore}</text></g> })}</svg><span className="relation-center">{selectedDish.name}</span>{relatedDishes.map((relatedDish, index) => { const point = relationNodeLayout[index]; return <button key={relatedDish.id} className="relation-node" style={{ left: `${point.x / 3.2}%`, top: `${point.y / 2.1}%` }} onClick={() => setSelectedDish(relatedDish)} title={`关系强度 ${relatedDish.relationScore}`}><i>{relatedDish.name}</i><small>{relatedDish.relationReason}</small></button> })}{!relatedDishes.length && <small className="relation-empty">暂时没有达到阈值的关系</small>}</div></div>
         </aside>}
       </div>

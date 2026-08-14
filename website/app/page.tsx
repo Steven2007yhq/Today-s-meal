@@ -10,8 +10,8 @@ const features = [
   },
   {
     number: "02",
-    title: "150+ 道菜，搜到就能吃",
-    copy: "覆盖八大菜系与节日、西式菜品。按菜名、食材、口味和做法搜索，再从一万多条关系中找到相近搭配。",
+    title: "5000 道菜，搜到就能搭",
+    copy: "覆盖传统菜、开源家常配方、主食小吃与产品自有家常搭配。支持分页筛选，并如实标注配方来源和营养可信度。",
     accent: "green",
   },
   {
@@ -89,7 +89,7 @@ export default function Home() {
                 <small>我的餐桌</small>
                 <i className="active">⌂ <span>好吃的今天</span></i>
                 <i>□ <span>餐食日历</span></i>
-                <i>⌕ <span>八大菜系库</span></i>
+                <i>⌕ <span>中华菜品库</span></i>
                 <i>♡ <span>我的收藏</span></i>
                 <small>场景模式</small>
                 <i>◉ <span>日常模式</span></i>
@@ -118,8 +118,8 @@ export default function Home() {
       </section>
 
       <section className="proof-strip" aria-label="产品数据">
-        <span><strong>150<sup>+</sup></strong><small>可搜索菜品</small></span>
-        <span><strong>10,000<sup>+</sup></strong><small>菜品关联关系</small></span>
+        <span><strong>5,000</strong><small>可搜索菜品</small></span>
+        <span><strong>119,000<sup>+</sup></strong><small>精选关联关系</small></span>
         <span><strong>4</strong><small>独立饮食场景</small></span>
         <span><strong>1</strong><small>位懂吃饭的小饭 AI</small></span>
       </section>

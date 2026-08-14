@@ -40,7 +40,7 @@ export const config = {
   port: numberFromEnv('IMAGE_API_PORT', 8787),
   databaseUrl: process.env.DATABASE_URL || INSECURE_DEFAULTS.databaseUrl,
   uploadToken: process.env.IMAGE_UPLOAD_TOKEN || INSECURE_DEFAULTS.uploadToken,
-  corsOrigins: (process.env.IMAGE_API_CORS_ORIGINS || 'http://localhost:5173,null').split(',').map((origin) => origin.trim()),
+  corsOrigins: (process.env.IMAGE_API_CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,null').split(',').map((origin) => origin.trim()),
   auth: {
     secret: process.env.AUTH_SESSION_SECRET || INSECURE_DEFAULTS.authSecret,
     sessionTtlSeconds: numberFromEnv('AUTH_SESSION_TTL_SECONDS', 60 * 60 * 24 * 30),

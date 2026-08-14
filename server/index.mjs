@@ -12,6 +12,7 @@ import { pool, withTransaction } from './db.mjs'
 import { ensureImageBucket, getSignedImageUrl, putImage } from './storage.mjs'
 import { createMealAiGateway, normalizeClientId } from './ai-service.mjs'
 import { BillingError, createBillingService } from './billing-service.mjs'
+import { createCatalogService } from './catalog-service.mjs'
 import { createPaymentProviderGateway } from './payment-providers.mjs'
 import {
   createSessionToken,
@@ -48,6 +49,7 @@ const billingService = createBillingService({
   paymentGateway,
   orderTtlMinutes: config.billing.orderTtlMinutes,
 })
+const catalogService = createCatalogService({ pool })
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 12 * 1024 * 1024, files: 1 },
@@ -843,18 +845,32 @@ app.get('/api/dishes/:dishId/images', async (request, response, next) => {
 
 app.get('/api/catalog/dishes', async (request, response, next) => {
   try {
-    const cuisine = String(request.query.cuisine || '').trim().slice(0, 40)
-    const search = String(request.query.search || '').trim().slice(0, 80)
-    const result = await pool.query(
-      `SELECT id, name, cuisine, method, taste, ingredients, nutrition, tags, source, updated_at
-       FROM catalog.dishes
-       WHERE ($1 = '' OR cuisine = $1)
-         AND ($2 = '' OR name ILIKE '%' || $2 || '%' OR ingredients::text ILIKE '%' || $2 || '%')
-       ORDER BY cuisine, name
-       LIMIT 300`,
-      [cuisine, search],
-    )
-    response.json({ dishes: result.rows })
+    response.json(await catalogService.listDishes(request.query))
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/api/catalog/facets', async (_request, response, next) => {
+  try {
+    response.json(await catalogService.readFacets())
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/api/catalog/dishes/:dishId', async (request, response, next) => {
+  try {
+    if (!isValidDishId(request.params.dishId)) {
+      response.status(400).json({ error: 'invalid_dish_id' })
+      return
+    }
+    const dish = await catalogService.readDish(request.params.dishId)
+    if (!dish) {
+      response.status(404).json({ error: 'dish_not_found' })
+      return
+    }
+    response.json({ dish })
   } catch (error) {
     next(error)
   }
@@ -866,17 +882,7 @@ app.get('/api/catalog/dishes/:dishId/relations', async (request, response, next)
       response.status(400).json({ error: 'invalid_dish_id' })
       return
     }
-    const result = await pool.query(
-      `SELECT relation.target_id AS "dishId", relation.score, relation.reason,
-              dish.name, dish.cuisine, dish.method
-       FROM catalog.dish_relations relation
-       JOIN catalog.dishes dish ON dish.id = relation.target_id
-       WHERE relation.source_id = $1
-       ORDER BY relation.score DESC
-       LIMIT 20`,
-      [request.params.dishId],
-    )
-    response.json({ relations: result.rows })
+    response.json(await catalogService.readRelations(request.params.dishId, request.query.limit))
   } catch (error) {
     next(error)
   }

@@ -364,7 +364,8 @@ export function calculateDishPortion(dish, mealHistory = [], mealType = '午餐'
     ? relevantHistory.reduce((total, entry) => total + Number(entry.portionMultiplier), 0) / relevantHistory.length
     : 1
   const targetCalories = mealCalorieTargets[mealType] || mealCalorieTargets.午餐
-  const nutritionFactor = targetCalories / dish.nutrition.calories
+  const listedCalories = Number(dish.nutrition?.calories)
+  const nutritionFactor = Number.isFinite(listedCalories) && listedCalories > 0 ? targetCalories / listedCalories : 1
   const perPersonFactor = clamp(historicalFactor * 0.58 + nutritionFactor * 0.42, 0.65, 1.55)
   const totalFactor = perPersonFactor * Math.max(1, householdSize)
 
@@ -375,11 +376,11 @@ export function calculateDishPortion(dish, mealHistory = [], mealType = '午餐'
       ...ingredient,
       grams: roundToFive(ingredient.grams * totalFactor),
     })),
-    nutrition: Object.fromEntries(Object.entries(dish.nutrition).map(([key, value]) => [key, Math.round(value * perPersonFactor)])),
+    nutrition: Object.fromEntries(Object.entries(dish.nutrition || {}).map(([key, value]) => [key, Math.round(Number(value || 0) * perPersonFactor)])),
     confidence: relevantHistory.length >= 6 ? '高' : relevantHistory.length >= 2 ? '中' : '起步',
     reason: relevantHistory.length
       ? `参考了 ${relevantHistory.length} 次${mealType}饭量记录，并对齐约 ${targetCalories} kcal 的单餐目标。`
-      : `暂按标准成人份与约 ${targetCalories} kcal 的单餐目标估算，记录越多会越懂你的饭量。`,
+      : `${listedCalories > 0 ? '暂按标准成人份' : '该配方营养待核验，暂按原配料份量'}与约 ${targetCalories} kcal 的单餐目标估算，记录越多会越懂你的饭量。`,
   }
 }
 
