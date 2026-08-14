@@ -351,6 +351,7 @@ async function readFavoriteState(client, ownerKeyHash) {
      JOIN meal.favorite_collections collection ON collection.id = favorite.collection_id
      JOIN catalog.dishes dish ON dish.id = favorite.dish_id
      WHERE favorite.owner_key_hash = $1
+       AND dish.publication_status = 'published'
      ORDER BY favorite.created_at DESC`,
     [ownerKeyHash],
   )
@@ -936,7 +937,7 @@ app.post('/api/favorites', async (request, response, next) => {
       response.status(400).json({ error: 'invalid_dish_id' })
       return
     }
-    const dishExists = await pool.query('SELECT id FROM catalog.dishes WHERE id = $1 LIMIT 1', [dishId])
+    const dishExists = await pool.query("SELECT id FROM catalog.dishes WHERE id = $1 AND publication_status = 'published' LIMIT 1", [dishId])
     if (!dishExists.rowCount) {
       response.status(404).json({ error: 'dish_not_found', message: '收藏失败，这道菜还没有入库。' })
       return
@@ -986,7 +987,8 @@ app.post('/api/favorites', async (request, response, next) => {
          FROM meal.favorite_dishes favorite
          JOIN meal.favorite_collections collection ON collection.id = favorite.collection_id
          JOIN catalog.dishes dish ON dish.id = favorite.dish_id
-         WHERE favorite.id = $1`,
+         WHERE favorite.id = $1
+           AND dish.publication_status = 'published'`,
         [upsertResult.rows[0].id],
       )
       return favoriteResult.rows[0]

@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { catalogIngredientAudit, catalogQualityAudit } from './catalog_quality_rules.mjs'
 
 const pantryIngredients = new Set(['食用油', '生姜', '姜', '小葱', '葱', '食盐', '盐', '酱油', '生抽', '老抽', '白糖', '糖', '淀粉', '大蒜', '蒜'])
 
@@ -270,6 +271,8 @@ export function catalogQualityReport(dishes, relations = []) {
     total: dishes.length,
     uniqueNames: names.size,
     duplicateNames,
+    suspiciousNames: catalogQualityAudit(dishes),
+    suspiciousIngredients: catalogIngredientAudit(dishes),
     reviewed,
     candidates: dishes.filter((dish) => dish.reviewStatus === 'candidate').length,
     generated: dishes.filter((dish) => dish.reviewStatus === 'generated').length,

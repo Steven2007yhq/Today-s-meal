@@ -101,7 +101,7 @@ npm run catalog:quality
 npm run catalog:seed
 ```
 
-质量报告写入 `output/catalog/catalog-quality-report.json`，会检查目标数量、标准化菜名唯一性和单菜关系上限。服务端接口包括 `GET /api/catalog/dishes`、`GET /api/catalog/dishes/:id`、`GET /api/catalog/dishes/:id/relations` 与 `GET /api/catalog/facets`。
+质量报告写入 `output/catalog/catalog-quality-report.json`，会检查目标数量、标准化菜名唯一性、异常/测试标题、默认目录中的烈酒饮品、被误识别为食材的厨具耗材，以及单菜关系上限；任一门禁失败都会中止导入。来源中不适合家庭用户展示的标题会被剔除或规范化，旧目录记录改为隐藏而不破坏用户收藏。服务端接口包括 `GET /api/catalog/dishes`、`GET /api/catalog/dishes/:id`、`GET /api/catalog/dishes/:id/relations` 与 `GET /api/catalog/facets`。
 
 ## 外部 Schema.org 菜谱扩充
 

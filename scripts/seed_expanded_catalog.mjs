@@ -87,6 +87,22 @@ async function upsertDishes(client, dishes) {
   }
 }
 
+async function retireStaleManagedDishes(client, dishes) {
+  const managedSources = ['figure', 'figure2', 'crawled', 'seasonal', 'howtocook', 'internal_combination']
+  const retired = await client.query(
+    `UPDATE catalog.dishes
+     SET publication_status = 'hidden', updated_at = now()
+     WHERE source = ANY($1::varchar[])
+       AND NOT (id = ANY($2::varchar[]))
+     RETURNING id`,
+    [managedSources, dishes.map((dish) => dish.id)],
+  )
+  const retiredIds = retired.rows.map((row) => row.id)
+  if (retiredIds.length) {
+    await client.query('DELETE FROM catalog.dish_relations WHERE source_id = ANY($1::varchar[]) OR target_id = ANY($1::varchar[])', [retiredIds])
+  }
+}
+
 async function replaceAliases(client, dishes) {
   const aliases = dishes.flatMap((dish) => (dish.aliases || []).map((alias) => ({
     dishId: dish.id, alias, normalized: normalizeDishName(alias), source: dish.source || 'catalog',
@@ -152,7 +168,7 @@ const report = {
 await fs.mkdir(path.dirname(reportPath), { recursive: true })
 await fs.writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8')
 
-if (report.total !== targetSize || report.uniqueNames !== targetSize || report.duplicateNames.length || report.maxRelationsPerDish > relationLimit) {
+if (report.total !== targetSize || report.uniqueNames !== targetSize || report.duplicateNames.length || report.suspiciousNames.length || report.suspiciousIngredients.length || report.maxRelationsPerDish > relationLimit) {
   throw new Error(`目录质量门禁未通过：${JSON.stringify(report)}`)
 }
 
@@ -162,6 +178,7 @@ if (!dryRun) {
   try {
     await client.query('BEGIN')
     await upsertDishes(client, dishes)
+    await retireStaleManagedDishes(client, dishes)
     await replaceAliases(client, dishes)
     await replaceSources(client, dishes)
     await replaceRelations(client, dishes, relations)

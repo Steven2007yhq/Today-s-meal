@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { catalogDishIssues, importedTitleChange, isLikelyKitchenTool, normalizeImportedDish } from './catalog_quality_rules.mjs'
 
 const sourceRoot = path.resolve(process.argv[2] || process.env.HOWTOCOOK_SOURCE || '')
 const outputPath = path.resolve(process.argv[3] || 'database/seeds/howtocook-recipes.json')
@@ -27,7 +28,6 @@ const regionKeywords = [
   '西藏', '甘肃', '青海', '宁夏', '新疆', '内蒙古', '香港', '澳门', '台湾', '东北', '江南', '全国',
 ]
 const methodKeywords = ['清蒸', '红烧', '爆炒', '小炒', '滑炒', '炒', '炖', '煮', '煎', '炸', '烤', '焖', '卤', '拌', '蒸', '熬', '烩']
-const toolWords = /锅|碗|盘|盆|刀|砧板|烤箱|空气炸锅|电饭煲|厨具|工具|筷子|勺|杯$/
 const seasoningWords = /盐|糖|酱油|生抽|老抽|醋|味精|鸡精|胡椒|十三香|料酒|食用油|淀粉|孜然|蚝油|豆瓣酱|葱|姜|蒜|辣椒|花椒|桂皮|八角|芝麻|香料/
 
 async function walk(directory) {
@@ -61,7 +61,7 @@ function ingredientNames(markdown) {
     const raw = line.replace(/^\s*[-*+]\s+/, '').replace(/\([^)]*\)|（[^）]*）/g, '')
     for (const part of raw.split(/[、，,；;\/]/)) {
       const value = part.replace(/^[^：:]+[：:]/, '').replace(/\d+(?:\.\d+)?\s*(?:克|g|kg|千克|毫升|ml|个|只|根|片|勺).*$/i, '').trim()
-      if (!value || value.length > 20 || toolWords.test(value)) continue
+      if (!value || value.length > 20 || isLikelyKitchenTool(value)) continue
       names.push(value)
     }
   }
@@ -118,6 +118,8 @@ const commit = await gitRevision(sourceRoot)
 const dishesRoot = path.join(sourceRoot, 'dishes')
 const files = (await walk(dishesRoot)).sort((left, right) => left.localeCompare(right, 'zh-CN'))
 const dishes = []
+const excluded = []
+const renamed = []
 for (const filePath of files) {
   const relativePath = path.relative(dishesRoot, filePath).replaceAll('\\', '/')
   const category = relativePath.split('/')[0]
@@ -127,8 +129,7 @@ for (const filePath of files) {
   const ingredients = ingredientsOf(markdown)
   if (!name || ingredients.length < 2) continue
   const [dishType, mealTypes] = categoryMeta[category] || ['其他', ['午餐', '晚餐']]
-  dishes.push({
-    id: `howtocook-${sha(name)}`,
+  const normalizedDish = normalizeImportedDish({
     name,
     aliases: [],
     cuisine: '开源家常菜',
@@ -149,6 +150,17 @@ for (const filePath of files) {
     publicationStatus: 'published',
     sourceRevision: commit,
   })
+  const issues = catalogDishIssues(normalizedDish, { sourceText: markdown })
+  if (issues.length) {
+    excluded.push({ name, relativePath, issues })
+    continue
+  }
+  const titleChange = importedTitleChange(name)
+  if (titleChange) renamed.push({ ...titleChange, relativePath })
+  dishes.push({
+    ...normalizedDish,
+    id: `howtocook-${sha(normalizedDish.name)}`,
+  })
 }
 
 const unique = [...new Map(dishes.map((dish) => [dish.name.normalize('NFKC'), dish])).values()]
@@ -159,6 +171,13 @@ await fs.writeFile(outputPath, `${JSON.stringify({
   license: 'Unlicense',
   sourceRevision: commit,
   recipeCount: unique.length,
+  qualityAudit: {
+    scanned: files.length,
+    excludedCount: excluded.length,
+    renamedCount: renamed.length,
+    excluded,
+    renamed,
+  },
   dishes: unique,
 }, null, 2)}\n`, 'utf8')
-console.log(`HowToCook catalog: ${unique.length} recipes -> ${outputPath}`)
+console.log(`HowToCook catalog: ${unique.length} recipes, ${excluded.length} excluded, ${renamed.length} renamed -> ${outputPath}`)
