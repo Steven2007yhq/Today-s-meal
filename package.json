@@ -1,0 +1,89 @@
+{
+  "name": "jin-tian-chi-sha",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "author": "好吃的今天产品团队",
+  "description": "面向中国家庭的智能饮食规划 Windows 桌面应用",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "node --test",
+    "check:syntax": "node --check server/index.mjs && node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/ai-service.cjs",
+    "check": "npm run check:syntax && npm run test && npm run build",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "app": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "pack:win": "npm run build && electron-builder --win nsis",
+    "recipes:build": "python scripts/build_dish_library.py --sources scripts/recipe_sources.json --output src/data/crawledDishLibrary.json",
+    "catalog:build": "npm run db:migrate && node scripts/build_figure_catalog.mjs",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "db:migrate": "node server/migrate.mjs",
+    "server": "node server/index.mjs",
+    "server:dev": "node --watch server/index.mjs",
+    "images:migrate": "node scripts/upload_local_dish_images.mjs",
+    "images:figure": "node scripts/upload_figure_images.mjs",
+    "catalog:seasonal": "node scripts/sync_seasonal_catalog.mjs",
+    "docs:pdf": "python scripts/build_help_pdfs.py"
+  },
+  "dependencies": {
+    "cors": "2.8.6",
+    "dotenv": "16.6.1",
+    "express": "5.2.1",
+    "helmet": "8.3.0",
+    "lucide-react": "1.28.0",
+    "minio": "8.0.7",
+    "multer": "2.2.0",
+    "pg": "8.22.0",
+    "qrcode": "^1.5.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "sharp": "0.35.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.0.5",
+    "concurrently": "10.0.4",
+    "electron": "43.2.0",
+    "electron-builder": "26.15.3",
+    "typescript": "7.0.2",
+    "vite": "8.2.0",
+    "wait-on": "9.1.0"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "build": {
+    "appId": "cn.jintianchisha.desktop",
+    "productName": "好吃的今天",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "output/pdf/hao-chi-de-jin-tian-user-guide.pdf",
+        "to": "docs/hao-chi-de-jin-tian-user-guide.pdf"
+      },
+      {
+        "from": "output/pdf/hao-chi-de-jin-tian-keyboard-shortcuts.pdf",
+        "to": "docs/hao-chi-de-jin-tian-keyboard-shortcuts.pdf"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "好吃的今天-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

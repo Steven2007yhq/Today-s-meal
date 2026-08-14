@@ -1,0 +1,15 @@
+{
+  "dishHash": {},
+  "nameHash": {},
+  "graphEdges": [],
+  "skipped": [
+    {
+      "url": "https://699pic.com/tupian/zhongguomeishi.html",
+      "reason": "robots.txt denied or unavailable"
+    },
+    {
+      "url": "https://www.bing.com/images/search?q=%e4%b8%ad%e5%9b%bd+%e7%be%8e%e9%a3%9f+%e5%9b%be%e7%89%87&qpvt=%e4%b8%ad%e5%9b%bd%e7%be%8e%e9%a3%9f%e5%9b%be%e7%89%87&form=IGRE&first=1",
+      "reason": "robots.txt denied or unavailable"
+    }
+  ]
+}
