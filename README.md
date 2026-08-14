@@ -60,18 +60,23 @@ GET  /api/auth/oauth/qq/start
 
 ## Pro 会员支付
 
-会员价格只由 PostgreSQL `billing.products` 决定，客户端传来的金额不会参与计费。服务端生成订单后返回微信或支付宝付款码；只有平台签名验证、商户身份、订单号、金额和币种全部一致的异步通知，才会把订单改为已支付并写入 Pro 权益。重复通知由支付事件唯一键去重，连续购买会从现有有效期末尾续接。
+会员价格只由 PostgreSQL `billing.products` 决定，客户端传来的金额不会参与计费。月度与年度商品分别按一个自然月和一个自然年计算，订单会冻结购买时的商品名称和周期，避免后续调价影响已付款权益。服务端生成订单后返回微信或支付宝付款码；只有平台签名验证、商户身份、订单号、金额和币种全部一致的通知或主动查单结果，才会把订单改为已支付并写入 Pro 权益。重复事件由唯一键去重，连续购买会从现有有效期末尾续接。
 
 ```text
 GET  /api/billing/products
 GET  /api/membership/me
 POST /api/billing/orders
+GET  /api/billing/orders
 GET  /api/billing/orders/:orderId
+POST /api/billing/orders/:orderId/reconcile
+POST /api/billing/admin/orders/:orderId/refund
 POST /api/billing/webhooks/wechat
 POST /api/billing/webhooks/alipay
 ```
 
-部署前在服务器 `.env` 配置 `PAYMENT_NOTIFY_BASE_URL` 及对应的 `WECHAT_PAY_*` / `ALIPAY_*` 参数，然后运行 `npm run db:migrate`。私钥、API v3 密钥和支付宝公钥路径只允许存在于服务器，不能使用 `VITE_*` 变量。`PAYMENT_DEV_SIMULATION=true` 仅供开发环境验证订单闭环；生产环境检测到它会拒绝启动。当前未实现自动续费、退款、主动查单与日终对账，上线收费前还需补齐这些运营能力。
+部署前在服务器 `.env` 配置 `PAYMENT_NOTIFY_BASE_URL`、`BILLING_ADMIN_TOKEN` 及对应的 `WECHAT_PAY_*` / `ALIPAY_*` 参数，然后运行 `npm run db:migrate`。私钥、管理令牌、API v3 密钥和支付宝公钥路径只允许存在于服务器，不能使用 `VITE_*` 变量。`PAYMENT_DEV_SIMULATION=true` 仅供开发环境验证订单闭环；生产环境检测到它会拒绝启动。
+
+客户端可读取最近订单，并对未确认订单发起一次服务端主动查单。管理端退款接口只负责登记已经在支付平台完成的退款、撤销对应权益并将后续已购权益前移，不会代替商户在微信或支付宝发起资金退款。该接口必须使用 `X-Billing-Admin-Token`。当前仍未实现自动扣款、平台退款发起和定时批量对账任务。
 
 ## 扩充菜谱库
 

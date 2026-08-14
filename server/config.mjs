@@ -7,6 +7,7 @@ export const INSECURE_DEFAULTS = Object.freeze({
   uploadToken: 'replace-this-development-token',
   authSecret: 'change-this-development-auth-secret',
   assignmentSecret: 'change-this-development-assignment-secret',
+  billingAdminToken: 'change-this-development-billing-admin-token',
   databaseUrl: 'postgresql://mealapp:mealapp_dev_password@127.0.0.1:55432/jintianchisha',
   minioAccessKey: 'mealapp_minio',
   minioSecretKey: 'mealapp_minio_dev_password',
@@ -64,6 +65,7 @@ export const config = {
     gatewayToken: process.env.AI_GATEWAY_TOKEN || '',
   },
   billing: {
+    adminToken: process.env.BILLING_ADMIN_TOKEN || INSECURE_DEFAULTS.billingAdminToken,
     notifyBaseUrl: process.env.PAYMENT_NOTIFY_BASE_URL || '',
     orderTtlMinutes: numberFromEnv('PAYMENT_ORDER_TTL_MINUTES', 15),
     devSimulation: booleanFromEnv('PAYMENT_DEV_SIMULATION'),

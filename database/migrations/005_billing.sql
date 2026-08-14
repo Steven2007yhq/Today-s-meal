@@ -90,3 +90,4 @@ CREATE TABLE IF NOT EXISTS billing.entitlements (
 CREATE INDEX IF NOT EXISTS billing_entitlements_user_active_idx
   ON billing.entitlements(user_id, ends_at DESC)
   WHERE status = 'active';
+

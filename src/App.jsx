@@ -68,7 +68,15 @@ import { useFavoriteCatalog } from './hooks/useFavoriteCatalog'
 import { usePreloadedImages } from './hooks/usePreloadedImages'
 import { analyzeDishQuery, calculateDishPortion, getDishGraphStats, getRelatedDishes, searchDishes } from './services/dishEngine'
 import { loginAccount, logoutAccount, readCurrentAuthSession, registerAccount, sendVerificationCode, startSocialLogin } from './services/authApi'
-import { completeDevelopmentOrder, createBillingOrder, listBillingProducts, readBillingOrder, readMembership } from './services/billingApi'
+import {
+  completeDevelopmentOrder,
+  createBillingOrder,
+  listBillingOrders,
+  listBillingProducts,
+  readBillingOrder,
+  readMembership,
+  reconcileBillingOrder,
+} from './services/billingApi'
 import { readDemoAccount } from './services/session'
 import { fetchDishImages } from './services/imageApi'
 import { exportRecipeToPdf, exportWeeklyPlanToPdf } from './services/pdfExport'
@@ -147,6 +155,7 @@ function App() {
   const [toast, setToast] = useState('')
   const [account, setAccount] = useState(() => readDemoAccount())
   const tabNavigationRef = useRef(false)
+  const membershipReminderRef = useRef('')
   const [mealHistory, setMealHistory] = useState(() => {
     const savedHistory = readJsonStorage(STORAGE_KEYS.mealHistory, demoMealHistory, Array.isArray)
     return savedHistory.length ? savedHistory : demoMealHistory
@@ -290,6 +299,14 @@ function App() {
       })
     return () => { active = false }
   }, [account?.id])
+
+  useEffect(() => {
+    if (!membership?.isPro || !membership.reminder?.message) return
+    const reminderKey = `${membership.validUntil}:${membership.reminder.daysRemaining}`
+    if (membershipReminderRef.current === reminderKey) return
+    membershipReminderRef.current = reminderKey
+    setToast(`${membership.reminder.message} 可在设置中的会员信息查看续费记录。`)
+  }, [membership])
 
   useEffect(() => {
     writeJsonStorage(STORAGE_KEYS.mealHistory, mealHistory.slice(-180))
@@ -574,7 +591,7 @@ function App() {
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onToast={setToast} onAuthenticated={handleAuthenticated} />}
       {showShare && <ShareModal onClose={() => setShowShare(false)} onToast={setToast} />}
-      {showSettings && <SettingsModal account={account} initialSection={settingsInitialSection} membership={membership} onClose={() => setShowSettings(false)} onOpenDocument={openHelpDocument} />}
+      {showSettings && <SettingsModal account={account} initialSection={settingsInitialSection} membership={membership} onMembershipChange={setMembership} onToast={setToast} onClose={() => setShowSettings(false)} onOpenDocument={openHelpDocument} />}
       {editingMeal && (
         <MealEditor
           meal={editingMeal}
@@ -1486,9 +1503,16 @@ function AssistantPanel({ module, meals, mealHistory, fitnessTrainingPlan, famil
 }
 
 const fallbackMembershipProducts = [
-  { code: 'pro_month', name: 'Pro 饭搭子月度会员', amountFen: 2999, durationDays: 31 },
-  { code: 'pro_year', name: 'Pro 饭搭子年度会员', amountFen: 19999, durationDays: 366 },
+  { code: 'pro_month', name: 'Pro 饭搭子月度会员', amountFen: 2999, durationDays: 31, billingPeriod: 'month', billingPeriodCount: 1 },
+  { code: 'pro_year', name: 'Pro 饭搭子年度会员', amountFen: 19999, durationDays: 366, billingPeriod: 'year', billingPeriodCount: 1 },
 ]
+
+function formatBillingPeriod(product) {
+  const count = Number(product?.billingPeriodCount || 1)
+  if (product?.billingPeriod === 'month') return `${count} 个自然月会员权益`
+  if (product?.billingPeriod === 'year') return `${count} 个自然年会员权益`
+  return `${Number(product?.durationDays || 0)} 天会员权益`
+}
 
 function formatMoney(amountFen) {
   return `¥${(Number(amountFen || 0) / 100).toFixed(2)}`
@@ -1617,7 +1641,7 @@ function MembershipModal({ account, onClose, onActivate, onRequireLogin, onToast
           <div className="price-options">
             {products.map((item) => {
               const yearly = item.code === 'pro_year'
-              return <button key={item.code} className={`${productCode === item.code ? 'selected ' : ''}${yearly ? 'hot' : ''}`} onClick={() => setProductCode(item.code)}>{yearly && <i>🔥 HOT · 年度更划算</i>}<span>{yearly ? '年度饭搭子' : '月度饭搭子'}</span><strong>{formatMoney(item.amountFen)}<small>/{yearly ? '年' : '月'}</small></strong><em>{item.durationDays} 天会员权益</em></button>
+              return <button key={item.code} className={`${productCode === item.code ? 'selected ' : ''}${yearly ? 'hot' : ''}`} onClick={() => setProductCode(item.code)}>{yearly && <i>🔥 HOT · 年度更划算</i>}<span>{yearly ? '年度饭搭子' : '月度饭搭子'}</span><strong>{formatMoney(item.amountFen)}<small>/{yearly ? '年' : '月'}</small></strong><em>{formatBillingPeriod(item)}</em></button>
             })}
           </div>
           <div className="payment-channel-picker">
@@ -1656,7 +1680,77 @@ function MealEditor({ meal, onClose, onSave }) {
   )
 }
 
-function SettingsModal({ account: activeAccount, initialSection = 'account', membership, onClose, onOpenDocument }) {
+const billingStatusLabels = Object.freeze({
+  pending: '待支付',
+  paid: '已支付',
+  failed: '支付失败',
+  closed: '已关闭',
+  expired: '已过期',
+  refunded: '已退款',
+})
+
+function formatMembershipDate(value, includeTime = false) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) return '—'
+  return includeTime
+    ? date.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    : date.toLocaleDateString('zh-CN')
+}
+
+function MembershipSettingsSection({ account, membership, onMembershipChange, onToast }) {
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(Boolean(account))
+  const [busyOrderId, setBusyOrderId] = useState('')
+  const [error, setError] = useState('')
+  const isPro = Boolean(membership?.isPro)
+
+  useEffect(() => {
+    let active = true
+    if (!account) {
+      setOrders([])
+      setLoading(false)
+      return () => { active = false }
+    }
+    setLoading(true)
+    listBillingOrders(8)
+      .then((payload) => { if (active) setOrders(payload?.orders || []) })
+      .catch((caughtError) => { if (active) setError(caughtError.message || '会员订单读取失败。') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [account?.id])
+
+  async function reconcile(order) {
+    if (!order?.id || busyOrderId) return
+    setBusyOrderId(order.id)
+    setError('')
+    try {
+      const payload = await reconcileBillingOrder(order.id)
+      if (payload?.membership) onMembershipChange?.(payload.membership)
+      setOrders((current) => current.map((item) => item.id === order.id ? payload.order : item))
+      onToast?.(payload?.order?.status === 'paid' ? '支付平台已确认到账，会员权益已更新。' : '查单完成，暂未发现新的到账结果。')
+    } catch (caughtError) {
+      setError(caughtError.message || '支付平台查单失败。')
+    } finally {
+      setBusyOrderId('')
+    }
+  }
+
+  return <div className="settings-section membership-settings-section">
+    <span className="settings-kicker">MEMBERSHIP</span><h3>会员信息</h3>
+    <div className={`membership-status ${isPro ? 'is-pro' : ''}`}><span>{isPro ? '👑' : '🍚'}</span><div><small>当前方案</small><strong>{isPro ? membership.productName || 'Pro 饭搭子' : '普通饭友 · 免费版'}</strong><p>{isPro ? '家庭、乐龄、健身模式均已解锁' : '日常模式永久免费，升级可解锁三种专属场景'}</p></div></div>
+    {membership?.reminder && <div className={`membership-reminder ${membership.reminder.level}`}><span>⏰</span><div><strong>续费提醒</strong><small>{membership.reminder.message} 当前不会自动扣款。</small></div></div>}
+    <div className="settings-rows membership-detail-rows"><span><em>会员有效期至</em><strong>{formatMembershipDate(membership?.validUntil)}</strong></span><span><em>剩余时间</em><strong>{isPro ? `${membership.daysRemaining || 0} 天` : '—'}</strong></span><span><em>自动续费</em><strong>{membership?.autoRenew ? '已开启' : '未开启 · 不会自动扣款'}</strong></span></div>
+    <div className="billing-history-head"><div><strong>最近订单</strong><small>价格和周期均以服务端订单为准</small></div>{loading && <i>读取中…</i>}</div>
+    {error && <p className="billing-history-error">{error}</p>}
+    {!account ? <div className="billing-history-empty">登录后可查看会员和续费记录。</div> : !loading && !orders.length ? <div className="billing-history-empty">还没有会员订单。</div> : <div className="billing-history-list">{orders.map((order) => {
+      const canReconcile = ['pending', 'expired', 'failed'].includes(order.status) && ['wechat', 'alipay'].includes(order.provider)
+      return <article key={order.id}><span className={`billing-order-state ${order.status}`}>{billingStatusLabels[order.status] || order.status}</span><div><strong>{order.productName}</strong><small>{formatMembershipDate(order.createdAt, true)} · {order.provider === 'wechat' ? '微信支付' : order.provider === 'alipay' ? '支付宝' : '开发测试'}</small></div><em>{formatMoney(order.amountFen)}</em>{canReconcile && <button type="button" disabled={Boolean(busyOrderId)} onClick={() => reconcile(order)}>{busyOrderId === order.id ? '查单中…' : '向平台查单'}</button>}</article>
+    })}</div>}
+  </div>
+}
+
+function SettingsModal({ account: activeAccount, initialSection = 'account', membership, onMembershipChange, onToast, onClose, onOpenDocument }) {
   const [section, setSection] = useState(initialSection)
   const [aiConfig, setAiConfig] = useState(managedAiDefaults)
   const [aiBusy, setAiBusy] = useState(false)
@@ -1700,8 +1794,6 @@ function SettingsModal({ account: activeAccount, initialSection = 'account', mem
   }
 
   const account = activeAccount || readDemoAccount()
-  const isPro = Boolean(membership?.isPro)
-  const membershipExpiry = membership?.validUntil ? new Date(membership.validUntil).toLocaleDateString('zh-CN') : '—'
   const accountLabel = account?.displayName || (account?.loginType === 'phone' ? account.phone : account?.loginType === 'email' ? account.email : account?.provider || '尚未登录')
   const settingsSections = [
     { id: 'account', label: '账号信息', icon: UserRound },
@@ -1716,7 +1808,7 @@ function SettingsModal({ account: activeAccount, initialSection = 'account', mem
       <div className="settings-title"><span><Settings size={20} /></span><div><small>SETTINGS & HELP</small><h2>把你的饭碗设置好</h2></div></div>
       <div className="settings-layout"><nav>{settingsSections.map((item) => { const Icon = item.icon; return <button key={item.id} className={section === item.id ? 'active' : ''} onClick={() => setSection(item.id)}><Icon size={17} />{item.label}<ChevronRight size={14} /></button> })}</nav><section>
         {section === 'account' && <div className="settings-section"><span className="settings-kicker">ACCOUNT</span><h3>账号信息</h3><div className="account-summary"><span className="avatar">小</span><div><strong>{account ? '已登录饭友' : '游客饭友'}</strong><small>{accountLabel}</small></div><i>{account ? '已验证' : '未登录'}</i></div><div className="settings-rows"><span><em>登录方式</em><strong>{account?.loginType === 'phone' ? '手机验证码 + 密码' : account?.loginType === 'email' ? '邮箱 + 密码' : account?.provider || '—'}</strong></span><span><em>本地数据</em><strong>保存在当前设备</strong></span><span><em>账号安全</em><strong>滑块验证已开启</strong></span></div></div>}
-        {section === 'membership' && <div className="settings-section"><span className="settings-kicker">MEMBERSHIP</span><h3>会员信息</h3><div className={`membership-status ${isPro ? 'is-pro' : ''}`}><span>{isPro ? '👑' : '🍚'}</span><div><small>当前方案</small><strong>{isPro ? 'Pro 饭搭子' : '普通饭友 · 免费版'}</strong><p>{isPro ? '家庭、乐龄、健身模式均已解锁' : '日常模式永久免费，升级可解锁三种专属场景'}</p></div></div><div className="settings-rows"><span><em>会员有效期至</em><strong>{membershipExpiry}</strong></span><span><em>权益来源</em><strong>{isPro ? '服务端支付订单' : '暂无有效订单'}</strong></span><span><em>自动续费</em><strong>未开启</strong></span></div></div>}
+        {section === 'membership' && <MembershipSettingsSection account={activeAccount} membership={membership} onMembershipChange={onMembershipChange} onToast={onToast} />}
         {section === 'ai' && (
           <div className="settings-section ai-settings-section">
             <span className="settings-kicker">MANAGED MEAL AI</span>

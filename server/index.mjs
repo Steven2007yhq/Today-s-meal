@@ -58,7 +58,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
 app.use(cors({
   origin: config.corsOrigins,
   methods: ['GET', 'POST', 'DELETE'],
-  allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key', 'X-Meal-Client-Id', 'X-Meal-Owner-Key'],
+  allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key', 'X-Billing-Admin-Token', 'X-Meal-Client-Id', 'X-Meal-Owner-Key'],
 }))
 function captureRawBody(request, _response, buffer) {
   request.rawBody = buffer.toString('utf8')
@@ -72,6 +72,17 @@ function requireUploadToken(request, response, next) {
   const tokenBuffer = Buffer.from(token || '')
   if (tokenBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(tokenBuffer, expectedBuffer)) {
     response.status(401).json({ error: 'invalid_upload_token' })
+    return
+  }
+  next()
+}
+
+function requireBillingAdminToken(request, response, next) {
+  const token = String(request.headers['x-billing-admin-token'] || '')
+  const expectedBuffer = Buffer.from(config.billing.adminToken)
+  const tokenBuffer = Buffer.from(token)
+  if (tokenBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(tokenBuffer, expectedBuffer)) {
+    response.status(401).json({ error: 'invalid_billing_admin_token', message: '账单管理授权失败。' })
     return
   }
   next()
@@ -691,6 +702,32 @@ app.get('/api/billing/orders/:orderId', requireAuthSession, async (request, resp
   try {
     if (!isUuid(request.params.orderId)) throw new BillingError('invalid_order_id', '订单编号无效。')
     response.json(await billingService.readOrder(request.authSession.user.id, request.params.orderId))
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/api/billing/orders', requireAuthSession, async (request, response, next) => {
+  try {
+    response.json(await billingService.listOrders(request.authSession.user.id, request.query.limit))
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.post('/api/billing/orders/:orderId/reconcile', requireAuthSession, async (request, response, next) => {
+  try {
+    if (!isUuid(request.params.orderId)) throw new BillingError('invalid_order_id', '订单编号无效。')
+    response.json(await billingService.reconcileOrder(request.authSession.user.id, request.params.orderId))
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.post('/api/billing/admin/orders/:orderId/refund', requireBillingAdminToken, async (request, response, next) => {
+  try {
+    if (!isUuid(request.params.orderId)) throw new BillingError('invalid_order_id', '订单编号无效。')
+    response.json(await billingService.recordRefund(request.params.orderId, request.body?.reason))
   } catch (error) {
     next(error)
   }

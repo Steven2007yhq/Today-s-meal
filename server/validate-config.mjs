@@ -22,6 +22,7 @@ export function collectConfigProblems(config) {
     { envName: 'IMAGE_UPLOAD_TOKEN', value: config.uploadToken, insecureDefault: INSECURE_DEFAULTS.uploadToken },
     { envName: 'AUTH_SESSION_SECRET', value: config.auth.secret, insecureDefault: INSECURE_DEFAULTS.authSecret },
     { envName: 'AI_ASSIGNMENT_SECRET', value: config.ai.assignmentSecret, insecureDefault: INSECURE_DEFAULTS.assignmentSecret },
+    { envName: 'BILLING_ADMIN_TOKEN', value: config.billing?.adminToken, insecureDefault: INSECURE_DEFAULTS.billingAdminToken },
   ]
   for (const check of secretChecks) {
     const problem = describeSecretProblem(check)

@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 
 const WECHAT_NATIVE_PATH = '/v3/pay/transactions/native'
+const WECHAT_QUERY_PATH = '/v3/pay/transactions/out-trade-no'
 
 function cleanString(value, maximum = 300) {
   return String(value || '').trim().slice(0, maximum)
@@ -213,6 +214,120 @@ export function createPaymentProviderGateway(rawConfig = {}, { fetchImpl = globa
     throw Object.assign(new Error('支付通道尚未配置。'), { code: 'provider_not_configured' })
   }
 
+  async function verifyWechatResponse(response, responseBody) {
+    const timestamp = cleanString(response.headers?.get?.('wechatpay-timestamp'), 32)
+    const nonce = cleanString(response.headers?.get?.('wechatpay-nonce'), 80)
+    const signature = cleanString(response.headers?.get?.('wechatpay-signature'), 1_024)
+    const serial = cleanString(response.headers?.get?.('wechatpay-serial'), 160)
+    if (!timestamp || !nonce || !signature || serial !== config.wechat.publicKeyId) {
+      throw Object.assign(new Error('微信支付查单响应缺少有效签名。'), { code: 'wechat_query_signature_missing' })
+    }
+    const publicKey = await readKey(config.wechat.publicKeyPath)
+    if (!verifyRsaSha256(`${timestamp}\n${nonce}\n${responseBody}\n`, signature, publicKey)) {
+      throw Object.assign(new Error('微信支付查单响应验签失败。'), { code: 'wechat_query_signature_invalid' })
+    }
+  }
+
+  async function queryWechatOrder(order) {
+    if (!config.wechatConfigured) throw Object.assign(new Error('微信支付商户参数尚未配置。'), { code: 'provider_not_configured' })
+    const privateKey = await readKey(config.wechat.privateKeyPath)
+    const path = `${WECHAT_QUERY_PATH}/${encodeURIComponent(order.outTradeNo)}`
+    const requestPath = `${path}?mchid=${encodeURIComponent(config.wechat.mchId)}`
+    const timestamp = Math.floor(Date.now() / 1_000).toString()
+    const nonce = createNonce()
+    const signature = signRsaSha256(`GET\n${requestPath}\n${timestamp}\n${nonce}\n\n`, privateKey)
+    const authorization = `WECHATPAY2-SHA256-RSA2048 mchid="${config.wechat.mchId}",nonce_str="${nonce}",timestamp="${timestamp}",serial_no="${config.wechat.certificateSerial}",signature="${signature}"`
+    const response = await fetchImpl(`https://api.mch.weixin.qq.com${requestPath}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json', Authorization: authorization, 'Wechatpay-Serial': config.wechat.publicKeyId },
+    })
+    const responseText = await response.text()
+    await verifyWechatResponse(response, responseText)
+    const transaction = safeJson(responseText) || {}
+    if (!response.ok || !transaction.trade_state) {
+      throw Object.assign(new Error(cleanString(transaction.message, 240) || `微信支付查单失败（HTTP ${response.status}）。`), { code: cleanString(transaction.code, 80) || 'wechat_query_failed' })
+    }
+    const providerState = cleanString(transaction.trade_state, 40)
+    const orderState = ['CLOSED', 'REVOKED'].includes(providerState) ? 'closed' : providerState === 'PAYERROR' ? 'failed' : 'pending'
+    return {
+      providerEventId: `query:${cleanString(transaction.transaction_id, 96) || order.outTradeNo}:${providerState}`,
+      eventType: `QUERY.${providerState}`,
+      outTradeNo: cleanString(transaction.out_trade_no, 32),
+      providerTradeNo: cleanString(transaction.transaction_id, 96),
+      paid: providerState === 'SUCCESS',
+      orderState,
+      stateDescription: cleanString(transaction.trade_state_desc, 240),
+      amountFen: Number(transaction.amount?.total ?? order.amountFen),
+      currency: cleanString(transaction.amount?.currency || order.currency, 3),
+      merchantId: cleanString(transaction.mchid, 40),
+      appId: cleanString(transaction.appid, 40),
+      payload: {
+        source: 'active_query',
+        transactionId: cleanString(transaction.transaction_id, 96),
+        tradeState: providerState,
+      },
+    }
+  }
+
+  async function queryAlipayOrder(order) {
+    if (!config.alipayConfigured) throw Object.assign(new Error('支付宝商户参数尚未配置。'), { code: 'provider_not_configured' })
+    const privateKey = await readKey(config.alipay.privateKeyPath)
+    const parameters = {
+      app_id: config.alipay.appId,
+      method: 'alipay.trade.query',
+      format: 'JSON',
+      charset: 'utf-8',
+      sign_type: 'RSA2',
+      timestamp: formatAlipayTimestamp(),
+      version: '1.0',
+      biz_content: JSON.stringify({ out_trade_no: order.outTradeNo }),
+    }
+    parameters.sign = signRsaSha256(serializeAlipaySignContent(parameters), privateKey)
+    const response = await fetchImpl(config.alipay.gateway, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+      body: new URLSearchParams(parameters),
+    })
+    const responseText = await response.text()
+    const payload = safeJson(responseText) || {}
+    const result = payload.alipay_trade_query_response || {}
+    const publicKey = await readKey(config.alipay.publicKeyPath)
+    const signedResult = extractTopLevelJsonObject(responseText, 'alipay_trade_query_response')
+    if (!payload.sign || !verifyRsaSha256(signedResult, payload.sign, publicKey)) {
+      throw Object.assign(new Error('支付宝查单响应验签失败。'), { code: 'alipay_query_signature_invalid' })
+    }
+    if (!response.ok || (!['10000', '40004'].includes(String(result.code)) && !result.trade_status)) {
+      throw Object.assign(new Error(cleanString(result.sub_msg || result.msg, 240) || `支付宝查单失败（HTTP ${response.status}）。`), { code: cleanString(result.sub_code || result.code, 80) || 'alipay_query_failed' })
+    }
+    const providerState = cleanString(result.trade_status || result.sub_code || 'TRADE_NOT_EXIST', 60)
+    const paid = ['TRADE_SUCCESS', 'TRADE_FINISHED'].includes(providerState)
+    const orderState = providerState === 'TRADE_CLOSED' ? 'closed' : 'pending'
+    return {
+      providerEventId: `query:${cleanString(result.trade_no, 96) || order.outTradeNo}:${providerState}`,
+      eventType: `QUERY.${providerState}`,
+      outTradeNo: cleanString(result.out_trade_no || order.outTradeNo, 32),
+      providerTradeNo: cleanString(result.trade_no, 96),
+      paid,
+      orderState,
+      stateDescription: cleanString(result.sub_msg || result.msg || providerState, 240),
+      amountFen: result.total_amount ? Math.round(Number(result.total_amount) * 100) : Number(order.amountFen),
+      currency: order.currency,
+      merchantId: cleanString(result.seller_id || config.alipay.sellerId, 40),
+      appId: config.alipay.appId,
+      payload: {
+        source: 'active_query',
+        tradeNo: cleanString(result.trade_no, 96),
+        tradeStatus: providerState,
+      },
+    }
+  }
+
+  async function queryOrder(provider, order) {
+    if (provider === 'wechat') return queryWechatOrder(order)
+    if (provider === 'alipay') return queryAlipayOrder(order)
+    throw Object.assign(new Error('该支付通道不支持主动查单。'), { code: 'reconciliation_not_supported' })
+  }
+
   async function parseWechatNotification({ headers, rawBody }) {
     if (!config.wechatConfigured) throw new Error('微信支付商户参数尚未配置。')
     const timestamp = cleanString(headers['wechatpay-timestamp'], 32)
@@ -281,7 +396,7 @@ export function createPaymentProviderGateway(rawConfig = {}, { fetchImpl = globa
     return provider === 'dev' && config.devConfigured
   }
 
-  return { createOrder, parseNotification, status, validateNotificationIdentity }
+  return { createOrder, queryOrder, parseNotification, status, validateNotificationIdentity }
 }
 
 export { serializeAlipaySignContent }
