@@ -1148,6 +1148,53 @@ function FavoritesView({ onToast, onUseDish }) {
   )
 }
 
+function catalogPageNumbers(currentPage, totalPages) {
+  const visibleCount = Math.min(5, totalPages)
+  const start = Math.max(1, Math.min(currentPage - 2, totalPages - visibleCount + 1))
+  return Array.from({ length: visibleCount }, (_, index) => start + index)
+}
+
+function CatalogPagination({ page, totalPages, loading, placement, onPageChange }) {
+  const [jumpPage, setJumpPage] = useState(String(page))
+
+  useEffect(() => setJumpPage(String(page)), [page])
+
+  function moveTo(nextPage) {
+    const safePage = Math.max(1, Math.min(totalPages, Math.round(Number(nextPage) || 1)))
+    if (safePage !== page) onPageChange(safePage)
+  }
+
+  return (
+    <nav className={`catalog-pagination ${placement}`} aria-label={`菜品库${placement === 'top' ? '顶部' : '底部'}分页`}>
+      <div className="catalog-page-controls">
+        <button disabled={page <= 1 || loading} onClick={() => moveTo(1)}>首页</button>
+        <button disabled={page <= 1 || loading} onClick={() => moveTo(page - 1)} aria-label="上一页">‹</button>
+        <div className="catalog-page-numbers">
+          {catalogPageNumbers(page, totalPages).map((pageNumber) => (
+            <button
+              key={pageNumber}
+              className={pageNumber === page ? 'active' : ''}
+              aria-current={pageNumber === page ? 'page' : undefined}
+              aria-label={`第 ${pageNumber} 页`}
+              disabled={loading}
+              onClick={() => moveTo(pageNumber)}
+            >
+              {pageNumber}
+            </button>
+          ))}
+        </div>
+        <button disabled={page >= totalPages || loading} onClick={() => moveTo(page + 1)} aria-label="下一页">›</button>
+        <button disabled={page >= totalPages || loading} onClick={() => moveTo(totalPages)}>末页</button>
+      </div>
+      <form className="catalog-page-jump" onSubmit={(event) => { event.preventDefault(); moveTo(event.currentTarget.elements.namedItem('page')?.value) }}>
+        <span>第 {page} / {totalPages} 页</span>
+        <label><em>跳至</em><input name="page" type="number" min="1" max={totalPages} value={jumpPage} onChange={(event) => setJumpPage(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); moveTo(event.currentTarget.value) } }} aria-label="跳转页码" /><em>页</em></label>
+        <button type="submit" disabled={loading}>前往</button>
+      </form>
+    </nav>
+  )
+}
+
 function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
   const [query, setQuery] = useState('')
   const [cuisine, setCuisine] = useState('all')
@@ -1165,6 +1212,8 @@ function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
   const [isExportingPdf, setIsExportingPdf] = useState(false)
   const { favoriteByDishId, activeCollection, toggleFavorite } = useFavoriteCatalog()
   const searchInputRef = useRef(null)
+  const dishResultsRef = useRef(null)
+  const previousCatalogPageRef = useRef(1)
   const searchAnalysis = useMemo(() => analyzeDishQuery(query), [query])
   const portion = selectedDish ? calculateDishPortion(selectedDish, mealHistory, mealType) : null
   const availableCuisines = useMemo(() => {
@@ -1234,6 +1283,13 @@ function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
     setSelectedDish(results[0])
   }, [results, selectedDish?.id])
 
+  useEffect(() => {
+    if (previousCatalogPageRef.current === catalogPage) return
+    previousCatalogPageRef.current = catalogPage
+    const frame = window.requestAnimationFrame(() => dishResultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    return () => window.cancelAnimationFrame(frame)
+  }, [catalogPage])
+
   function dishImage(dish, thumbnail = true) {
     const remoteImage = remoteImages[dish.id]
     return (thumbnail ? remoteImage?.thumbnailUrl : remoteImage?.url) || dish.image
@@ -1287,7 +1343,8 @@ function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
       </div>
       <div className="library-layout">
         <section className="dish-results">
-          <div className="library-result-head"><span>找到 {pageInfo.total.toLocaleString('zh-CN')} 道好菜 <i className={`catalog-state ${catalogState}`}>{catalogState === 'online' ? '服务端目录' : catalogState === 'offline' ? '离线基础库' : '正在检索'}</i></span><button onClick={() => { setQuery(''); setCuisine('all'); setRegion('all'); setDishType('all'); setCatalogPage(1) }}>清空筛选</button></div>
+          <div className="library-result-head" ref={dishResultsRef}><span>找到 {pageInfo.total.toLocaleString('zh-CN')} 道好菜 <i className={`catalog-state ${catalogState}`}>{catalogState === 'online' ? '服务端目录' : catalogState === 'offline' ? '离线基础库' : '正在检索'}</i></span><button onClick={() => { setQuery(''); setCuisine('all'); setRegion('all'); setDishType('all'); setCatalogPage(1) }}>清空筛选</button></div>
+          {pageInfo.totalPages > 1 && <CatalogPagination page={catalogPage} totalPages={pageInfo.totalPages} loading={catalogState === 'loading'} placement="top" onPageChange={setCatalogPage} />}
           <div className="dish-card-grid">
             {results.map((dish) => {
               const imageUrl = dishImage(dish)
@@ -1333,7 +1390,7 @@ function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
               )
             })}
           </div>
-          {pageInfo.totalPages > 1 && <nav className="catalog-pagination" aria-label="菜品库分页"><button disabled={catalogPage <= 1 || catalogState === 'loading'} onClick={() => setCatalogPage((page) => Math.max(1, page - 1))}>上一页</button><span>第 {pageInfo.page} / {pageInfo.totalPages} 页</span><button disabled={!pageInfo.hasNextPage || catalogState === 'loading'} onClick={() => setCatalogPage((page) => page + 1)}>下一页</button></nav>}
+          {pageInfo.totalPages > 1 && <CatalogPagination page={catalogPage} totalPages={pageInfo.totalPages} loading={catalogState === 'loading'} placement="bottom" onPageChange={setCatalogPage} />}
           {!results.length && <div className="empty-library"><span>🍜</span><strong>这道菜还在后厨备菜</strong><small>换个关键词，或者等爬虫把它带回来。</small></div>}
         </section>
         {selectedDish && portion && <aside className="dish-detail panel-card">
