@@ -1,16 +1,15 @@
 import { Component, useEffect, useMemo, useRef, useState } from 'react'
+import QRCode from 'qrcode'
 import {
   Activity,
   Apple,
   ArrowLeft,
   ArrowRight,
-  BarChart3,
   Beef,
-  Bell,
+  BookOpen,
   CalendarDays,
   Check,
   CheckCircle2,
-  ChevronDown,
   ChevronRight,
   CircleUserRound,
   Clock3,
@@ -18,9 +17,8 @@ import {
   FileDown,
   Flame,
   Heart,
-  Home,
+  Keyboard,
   Leaf,
-  LockKeyhole,
   MessageCircleMore,
   Minus,
   MoreHorizontal,
@@ -43,17 +41,42 @@ import {
   WalletCards,
   Wheat,
   X,
-  Zap,
 } from 'lucide-react'
+import { Sidebar, Topbar } from './components/AppNavigation'
+import elderTeaImage from './assets/lifestyle/elder-tea.webp'
+import familyDinnerImage from './assets/lifestyle/family-dinner.webp'
+import fitnessTrainingImage from './assets/lifestyle/fitness-training.webp'
+import { ElderProfileModal, FamilyProfileModal } from './components/DietaryProfileEditors'
+import { FitnessPlanModal, FitnessTrainingPlanner } from './components/FitnessTrainingPlanner'
+import { ModalShell } from './components/ModalShell'
+import { managedAiDefaults, quickQuestions, relationNodeLayout } from './data/appContent'
+import {
+  buildElderProfileContext,
+  buildFamilyProfileContext,
+  createDefaultElderProfile,
+  createDefaultFamilyProfile,
+  ELDER_CARE_GOALS,
+  elderProfileSummary,
+  familyProfileSummary,
+  normalizeElderProfile,
+  normalizeFamilyProfile,
+} from './data/dietaryProfiles'
 import { cuisineMeta, dishes } from './data/dishLibrary'
+import { demoMealHistory, initialMeals, weekPlan } from './data/mealPlan'
+import { buildFitnessTrainingContext, createDefaultFitnessTrainingPlan, normalizeFitnessTrainingPlan, resolveFitnessTraining } from './data/trainingPlan'
 import { useFavoriteCatalog } from './hooks/useFavoriteCatalog'
 import { usePreloadedImages } from './hooks/usePreloadedImages'
 import { analyzeDishQuery, calculateDishPortion, getDishGraphStats, getRelatedDishes, searchDishes } from './services/dishEngine'
 import { loginAccount, logoutAccount, readCurrentAuthSession, registerAccount, sendVerificationCode, startSocialLogin } from './services/authApi'
+import { completeDevelopmentOrder, createBillingOrder, listBillingProducts, readBillingOrder, readMembership } from './services/billingApi'
 import { readDemoAccount } from './services/session'
 import { fetchDishImages } from './services/imageApi'
 import { exportRecipeToPdf, exportWeeklyPlanToPdf } from './services/pdfExport'
-import { formatChinaHeader, getChinaToday } from './utils/chinaTime'
+import { readJsonStorage, STORAGE_KEYS, writeJsonStorage } from './services/browserStorage'
+import { buildMonthCells, calendarDateKey, dateFromCalendarKey, mealsForCalendarDate, sameCalendarDate } from './services/mealPlanner'
+import { resolveKeyboardShortcut } from './services/keyboardShortcuts'
+import { createViewHistory, getCurrentView, moveViewHistory, pushView } from './services/viewHistory'
+import { getChinaToday } from './utils/chinaTime'
 
 const modules = [
   {
@@ -97,147 +120,20 @@ const modules = [
   },
 ]
 
-const initialMeals = [
-  {
-    type: '早餐',
-    time: '07:30',
-    title: '元气紫薯燕麦碗',
-    description: '紫薯 100g · 燕麦 40g · 牛奶 250ml · 蓝莓一小把',
-    kcal: 436,
-    protein: 18,
-    tag: '高纤维',
-    portionMultiplier: 0.9,
-    image: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=500&q=85',
-    done: true,
-  },
-  {
-    type: '午餐',
-    time: '12:10',
-    title: '照烧鸡腿糙米饭',
-    description: '去皮鸡腿 150g · 糙米饭 180g · 西兰花 120g',
-    kcal: 628,
-    protein: 42,
-    tag: '蛋白优选',
-    portionMultiplier: 1.1,
-    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=500&q=85',
-    done: false,
-  },
-  {
-    type: '晚餐',
-    time: '18:30',
-    title: '番茄菌菇豆腐煲',
-    description: '北豆腐 160g · 番茄 200g · 菌菇 100g · 青菜 150g',
-    kcal: 492,
-    protein: 27,
-    tag: '清爽少盐',
-    portionMultiplier: 0.95,
-    image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=500&q=85',
-    done: false,
-  },
-]
-
-const demoMealHistory = [
-  { type: '早餐', portionMultiplier: 0.85 }, { type: '早餐', portionMultiplier: 0.92 }, { type: '早餐', portionMultiplier: 0.88 },
-  { type: '午餐', portionMultiplier: 1.08 }, { type: '午餐', portionMultiplier: 1.15 }, { type: '午餐', portionMultiplier: 1.04 },
-  { type: '晚餐', portionMultiplier: 0.9 }, { type: '晚餐', portionMultiplier: 0.96 }, { type: '晚餐', portionMultiplier: 0.92 },
-]
-
-const weekPlan = [
-  ['周一', '紫薯燕麦碗', '照烧鸡腿饭', '番茄豆腐煲'],
-  ['周二', '鸡蛋蔬菜饼', '番茄牛腩面', '虾仁冬瓜汤'],
-  ['周三', '香蕉花生吐司', '香菇滑鸡饭', '清蒸鲈鱼套餐'],
-  ['周四', '玉米豆浆套餐', '黑椒牛柳饭', '菌菇荞麦面'],
-  ['周五', '酸奶坚果杯', '三文鱼杂粮碗', '山药排骨汤'],
-  ['周六', '鲜肉小馄饨', '家庭缤纷火锅', '轻食水果拼盘'],
-  ['周日', '全麦鸡蛋卷', '板栗焖鸡套餐', '南瓜小米粥'],
-]
-
-const quickQuestions = [
-  '中午想吃点辣的，怎么搭配？',
-  '帮我把今天晚餐换成素食',
-  '最近三天的蛋白质够吗？',
-]
-
-const publishedNotifications = [
-  { id: 'product-launch', emoji: '🎉', title: '新产品上线啦', description: '餐食日历和八大菜系库已经焕新，快来安排下一顿。', time: '刚刚' },
-  { id: 'cloud-gallery', emoji: '🖼️', title: '菜品云端图库已更新', description: '新一批中国美食图片正在入库，找菜更有食欲。', time: '今天' },
-  { id: 'weekly-report', emoji: '📊', title: '每周营养报告已生成', description: '本周膳食表现出炉，看看哪一顿最会吃。', time: '昨天' },
-]
-
-const managedAiDefaults = {
-  provider: 'deepseek',
-  providerName: 'DeepSeek',
-  model: 'deepseek-chat',
-  endpoint: '平台托管',
-  managed: true,
-  configured: false,
-  ready: false,
-  allocation: 'server-managed',
-}
-
-const relationNodeLayout = [
-  { x: 64, y: 34 }, { x: 256, y: 34 }, { x: 266, y: 105 },
-  { x: 250, y: 176 }, { x: 70, y: 176 }, { x: 54, y: 105 },
-]
-
-const mealSlots = [
-  { type: '早餐', time: '07:30', kcal: 430, protein: 18 },
-  { type: '午餐', time: '12:10', kcal: 620, protein: 38 },
-  { type: '晚餐', time: '18:30', kcal: 490, protein: 27 },
-]
-
-function sameCalendarDate(firstDate, secondDate) {
-  return firstDate.getFullYear() === secondDate.getFullYear()
-    && firstDate.getMonth() === secondDate.getMonth()
-    && firstDate.getDate() === secondDate.getDate()
-}
-
-function buildMonthCells(monthDate) {
-  const year = monthDate.getFullYear()
-  const month = monthDate.getMonth()
-  const mondayBasedOffset = (new Date(year, month, 1).getDay() + 6) % 7
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(year, month, index - mondayBasedOffset + 1)
-    return { date, currentMonth: date.getMonth() === month }
-  })
-}
-
-function calendarDateKey(date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function dateFromCalendarKey(dateKey) {
-  const [year, month, day] = dateKey.split('-').map(Number)
-  return new Date(year, month - 1, day)
-}
-
-function mealsForCalendarDate(date, meals, calendarMealsByDate = {}) {
-  if (sameCalendarDate(date, getChinaToday())) return meals
-  const dateKey = calendarDateKey(date)
-  if (Array.isArray(calendarMealsByDate[dateKey])) return calendarMealsByDate[dateKey]
-  const mondayBasedDay = (date.getDay() + 6) % 7
-  return weekPlan[mondayBasedDay].slice(1).map((title, index) => ({
-    ...mealSlots[index],
-    calendarId: `${dateKey}-${index}`,
-    title,
-    description: '由循环食谱自动安排，可点击继续调整食材与用量。',
-    tag: '循环食谱',
-    image: initialMeals[index]?.image,
-    done: false,
-    portionMultiplier: 1,
-  }))
-}
+const browserHelpDocuments = Object.freeze({
+  'user-guide': '/docs/hao-chi-de-jin-tian-user-guide.pdf',
+  'keyboard-shortcuts': '/docs/hao-chi-de-jin-tian-keyboard-shortcuts.pdf',
+})
 
 function App() {
-  const [activeModule, setActiveModule] = useState('standard')
-  const [activePage, setActivePage] = useState('today')
+  const [viewHistory, setViewHistory] = useState(() => createViewHistory({ module: 'standard', page: 'today' }))
+  const { module: activeModule, page: activePage } = getCurrentView(viewHistory)
   const [meals, setMeals] = useState(initialMeals)
   const [showAssistant, setShowAssistant] = useState(false)
   const [showMembership, setShowMembership] = useState(false)
   const [showFamilySetup, setShowFamilySetup] = useState(false)
+  const [showElderProfile, setShowElderProfile] = useState(false)
+  const [showFitnessPlan, setShowFitnessPlan] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -247,46 +143,122 @@ function App() {
   const [editingMeal, setEditingMeal] = useState(null)
   const [editingDateKey, setEditingDateKey] = useState(null)
   const [pendingModule, setPendingModule] = useState(null)
-  const [isPro, setIsPro] = useState(false)
+  const [membership, setMembership] = useState({ isPro: false, plan: 'free', validUntil: null, source: 'server' })
   const [toast, setToast] = useState('')
   const [account, setAccount] = useState(() => readDemoAccount())
-  const [familyReady, setFamilyReady] = useState(false)
   const tabNavigationRef = useRef(false)
   const [mealHistory, setMealHistory] = useState(() => {
-    try {
-      const savedHistory = JSON.parse(window.localStorage.getItem('mealHistory'))
-      return Array.isArray(savedHistory) && savedHistory.length ? savedHistory : demoMealHistory
-    } catch {
-      return demoMealHistory
-    }
+    const savedHistory = readJsonStorage(STORAGE_KEYS.mealHistory, demoMealHistory, Array.isArray)
+    return savedHistory.length ? savedHistory : demoMealHistory
   })
   const [calendarMealsByDate, setCalendarMealsByDate] = useState(() => {
-    try {
-      const savedMeals = JSON.parse(window.localStorage.getItem('calendarMealsByDate'))
-      return savedMeals && typeof savedMeals === 'object' && !Array.isArray(savedMeals) ? savedMeals : {}
-    } catch {
-      return {}
-    }
+    return readJsonStorage(
+      STORAGE_KEYS.calendarMeals,
+      {},
+      (value) => value && typeof value === 'object' && !Array.isArray(value),
+    )
+  })
+  const [fitnessTrainingPlan, setFitnessTrainingPlan] = useState(() => {
+    return normalizeFitnessTrainingPlan(readJsonStorage(
+      STORAGE_KEYS.fitnessTrainingPlan,
+      createDefaultFitnessTrainingPlan(),
+      (value) => value && typeof value === 'object' && Array.isArray(value.days),
+    ))
+  })
+  const [familyProfile, setFamilyProfile] = useState(() => {
+    return normalizeFamilyProfile(readJsonStorage(
+      STORAGE_KEYS.familyProfile,
+      createDefaultFamilyProfile(),
+      (value) => value && typeof value === 'object' && Array.isArray(value.members),
+    ))
+  })
+  const [elderProfile, setElderProfile] = useState(() => {
+    return normalizeElderProfile(readJsonStorage(
+      STORAGE_KEYS.elderProfile,
+      createDefaultElderProfile(),
+      (value) => value && typeof value === 'object',
+    ))
   })
 
+  const isPro = membership.isPro
+
   const selectedModule = modules.find((item) => item.id === activeModule)
+  const todayTraining = useMemo(() => resolveFitnessTraining(fitnessTrainingPlan, getChinaToday()), [fitnessTrainingPlan])
+  const familyReady = familyProfile.completed
+
+  function navigateView(nextView) {
+    setViewHistory((current) => pushView(current, { ...getCurrentView(current), ...nextView }))
+  }
+
+  function navigatePage(page) {
+    navigateView({ page })
+  }
+
+  function goBack() {
+    setViewHistory((current) => moveViewHistory(current, -1))
+  }
+
+  function goForward() {
+    setViewHistory((current) => moveViewHistory(current, 1))
+  }
 
   function openSearch() {
-    setActivePage('library')
+    navigatePage('library')
     setSearchFocusRequest((current) => current + 1)
   }
 
+  function openSettings(section = 'account') {
+    setSettingsInitialSection(section)
+    setShowSettings(true)
+  }
+
+  async function openHelpDocument(documentId) {
+    try {
+      if (window.mealDesktop?.openHelpDocument) {
+        const result = await window.mealDesktop.openHelpDocument(documentId)
+        if (!result?.ok) throw new Error(result?.error || '文档打开失败')
+        return
+      }
+
+      const documentUrl = browserHelpDocuments[documentId]
+      if (!documentUrl) throw new Error('未找到对应说明文档')
+      window.open(documentUrl, '_blank', 'noopener,noreferrer')
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : '说明文档打开失败')
+    }
+  }
+
   useEffect(() => {
-    function handleSearchShortcut(event) {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault()
+    function handleAppShortcut(event) {
+      const action = resolveKeyboardShortcut(event)
+      if (!action || (event.target.closest?.('[role="dialog"]') && action.type !== 'close-overlay')) return
+
+      event.preventDefault()
+      if (action.type === 'history') {
+        if (action.direction === 'back') goBack()
+        else goForward()
+      } else if (action.type === 'page') {
+        navigatePage(action.target)
+      } else if (action.type === 'module') {
+        chooseModule(modules.find((item) => item.id === action.target))
+      } else if (action.type === 'search') {
+        setShowAssistant(false)
         openSearch()
+      } else if (action.type === 'assistant') {
+        setShowAssistant((current) => !current)
+      } else if (action.type === 'settings') {
+        setShowAssistant(false)
+        openSettings('account')
+      } else if (action.type === 'document') {
+        openHelpDocument(action.target)
+      } else if (action.type === 'close-overlay' && showAssistant) {
+        setShowAssistant(false)
       }
     }
 
-    window.addEventListener('keydown', handleSearchShortcut)
-    return () => window.removeEventListener('keydown', handleSearchShortcut)
-  }, [])
+    window.addEventListener('keydown', handleAppShortcut)
+    return () => window.removeEventListener('keydown', handleAppShortcut)
+  }, [familyReady, isPro, showAssistant])
 
   useEffect(() => {
     if (!toast) return undefined
@@ -297,18 +269,47 @@ function App() {
   useEffect(() => {
     let active = true
     readCurrentAuthSession().then((payload) => {
-      if (active && payload?.user) setAccount(payload.user)
+      if (!active) return
+      setAccount(payload?.user || null)
     })
     return () => { active = false }
   }, [])
 
   useEffect(() => {
-    window.localStorage.setItem('mealHistory', JSON.stringify(mealHistory.slice(-180)))
+    let active = true
+    if (!account) {
+      setMembership({ isPro: false, plan: 'free', validUntil: null, source: 'server' })
+      return () => { active = false }
+    }
+    readMembership()
+      .then((payload) => {
+        if (active && payload?.membership) setMembership(payload.membership)
+      })
+      .catch(() => {
+        if (active) setMembership({ isPro: false, plan: 'free', validUntil: null, source: 'server' })
+      })
+    return () => { active = false }
+  }, [account?.id])
+
+  useEffect(() => {
+    writeJsonStorage(STORAGE_KEYS.mealHistory, mealHistory.slice(-180))
   }, [mealHistory])
 
   useEffect(() => {
-    window.localStorage.setItem('calendarMealsByDate', JSON.stringify(calendarMealsByDate))
+    writeJsonStorage(STORAGE_KEYS.calendarMeals, calendarMealsByDate)
   }, [calendarMealsByDate])
+
+  useEffect(() => {
+    writeJsonStorage(STORAGE_KEYS.fitnessTrainingPlan, fitnessTrainingPlan)
+  }, [fitnessTrainingPlan])
+
+  useEffect(() => {
+    writeJsonStorage(STORAGE_KEYS.familyProfile, familyProfile)
+  }, [familyProfile])
+
+  useEffect(() => {
+    writeJsonStorage(STORAGE_KEYS.elderProfile, elderProfile)
+  }, [elderProfile])
 
   useEffect(() => {
     function trackKeyboardNavigation(event) {
@@ -341,6 +342,19 @@ function App() {
     })
   }
 
+  function updateFitnessPlan(nextPlan, message = '') {
+    const normalized = normalizeFitnessTrainingPlan(nextPlan)
+    setFitnessTrainingPlan(normalized)
+    if (message) setToast(message)
+  }
+
+  function changeTodayTrainingPlan(nextPlan) {
+    const nextTraining = resolveFitnessTraining(nextPlan, getChinaToday())
+    updateFitnessPlan(nextPlan, nextTraining.isRestDay
+      ? '今天已改为休息恢复，小饭会按休息日调整建议。'
+      : `今天已安排 ${nextTraining.sessions.length} 项训练，共 ${nextTraining.totalDurationMinutes} 分钟，小饭会综合计算补给。`)
+  }
+
   function chooseModule(moduleItem) {
     if (moduleItem.pro && !isPro) {
       setPendingModule(moduleItem.id)
@@ -352,30 +366,37 @@ function App() {
       setShowFamilySetup(true)
       return
     }
-    setActiveModule(moduleItem.id)
-    setActivePage('today')
+    navigateView({ module: moduleItem.id, page: 'today' })
   }
 
-  function activateTrial() {
-    setIsPro(true)
+  function finishMembershipPurchase(nextMembership) {
+    if (!nextMembership?.isPro) return
+    setMembership(nextMembership)
     setShowMembership(false)
     const target = pendingModule || 'family'
     setPendingModule(null)
     if (target === 'family' && !familyReady) {
       setShowFamilySetup(true)
     } else {
-      setActiveModule(target)
-      setActivePage('today')
-      setToast('Pro 体验已开启，去解锁更懂你的菜单吧！')
+      navigateView({ module: target, page: 'today' })
+      setToast('Pro 会员已到账，去解锁更懂你的菜单吧！')
     }
   }
 
-  function finishFamilySetup() {
-    setFamilyReady(true)
+  function finishFamilySetup(nextProfile) {
+    const wasReady = familyProfile.completed
+    setFamilyProfile(normalizeFamilyProfile({ ...nextProfile, completed: true }))
     setShowFamilySetup(false)
-    setActiveModule('family')
-    setActivePage('today')
-    setToast('全家档案已就位，开饭这事交给我！')
+    if (!wasReady) navigateView({ module: 'family', page: 'today' })
+    setToast(wasReady ? '家庭档案已更新，小饭会按每位成员重新调整。' : '全家档案已就位，开饭这事交给我！')
+  }
+
+  function finishElderProfile(nextProfile) {
+    setElderProfile(normalizeElderProfile({ ...nextProfile, completed: true }))
+    setShowElderProfile(false)
+    setToast(nextProfile.diseaseDisclosure === 'not_disclosed'
+      ? '健康偏好已保存；疾病史保持私密，小饭不会推断或追问。'
+      : '乐龄饮食档案已更新，小饭会按新偏好给建议。')
   }
 
   function handleAuthenticated(payload) {
@@ -388,6 +409,7 @@ function App() {
     try {
       await logoutAccount()
       setAccount(null)
+      setMembership({ isPro: false, plan: 'free', validUntil: null, source: 'server' })
       setToast('已退出登录，下次见，饭友。')
     } catch {
       setToast('退出登录失败，请稍后再试。')
@@ -411,7 +433,7 @@ function App() {
       dishId: dish.id,
       portionMultiplier: portion.multiplier,
     }])
-    setActivePage('today')
+    navigatePage('today')
     setToast(`${dish.name}已按你的历史饭量换算，加入${mealType}。`)
   }
 
@@ -448,8 +470,16 @@ function App() {
       onToggleDone={toggleMealDone}
       onOpenAssistant={() => setShowAssistant(true)}
       onShare={() => setShowShare(true)}
-      onNavigate={setActivePage}
+      onNavigate={navigatePage}
       onOpenLibrary={openSearch}
+      fitnessTrainingPlan={fitnessTrainingPlan}
+      todayTraining={todayTraining}
+      onChangeTrainingPlan={changeTodayTrainingPlan}
+      onEditTrainingPlan={() => setShowFitnessPlan(true)}
+      familyProfile={familyProfile}
+      elderProfile={elderProfile}
+      onEditFamilyProfile={() => setShowFamilySetup(true)}
+      onEditElderProfile={() => setShowElderProfile(true)}
     />
   ) : activePage === 'calendar' ? (
     <CalendarView meals={meals} calendarMealsByDate={calendarMealsByDate} onEdit={openCalendarMealEditor} onToast={setToast} />
@@ -470,18 +500,22 @@ function App() {
     <div className={`app-shell theme-${activeModule}`} onFocusCapture={handleFieldFocusCapture}>
       <Sidebar
         activePage={activePage}
-        onNavigate={setActivePage}
+        onNavigate={navigatePage}
         modules={modules}
         activeModule={activeModule}
         onChooseModule={chooseModule}
         isPro={isPro}
         onOpenMembership={() => setShowMembership(true)}
-        onOpenSettings={() => { setSettingsInitialSection('account'); setShowSettings(true) }}
+        onOpenSettings={() => openSettings('account')}
       />
 
       <main className="main-panel">
         <Topbar
           module={selectedModule}
+          canGoBack={viewHistory.index > 0}
+          canGoForward={viewHistory.index < viewHistory.entries.length - 1}
+          onBack={goBack}
+          onForward={goForward}
           onProfile={() => setShowProfile(true)}
           onLogin={() => setShowLogin(true)}
           account={account}
@@ -504,25 +538,43 @@ function App() {
             module={selectedModule}
             meals={meals}
             mealHistory={mealHistory}
+            fitnessTrainingPlan={fitnessTrainingPlan}
+            familyProfile={familyProfile}
+            elderProfile={elderProfile}
             onClose={() => setShowAssistant(false)}
-            onConfigureAi={() => { setShowAssistant(false); setSettingsInitialSection('ai'); setShowSettings(true) }}
+            onConfigureAi={() => { setShowAssistant(false); openSettings('ai') }}
           />
         </AssistantErrorBoundary>
       )}
       {showMembership && (
         <MembershipModal
+          account={account}
           onClose={() => setShowMembership(false)}
-          onActivate={activateTrial}
+          onActivate={finishMembershipPurchase}
+          onRequireLogin={() => { setShowMembership(false); setShowLogin(true) }}
           onToast={setToast}
         />
       )}
       {showFamilySetup && (
-        <FamilySetupModal onClose={() => setShowFamilySetup(false)} onFinish={finishFamilySetup} />
+        <FamilyProfileModal profile={familyProfile} isSetup={!familyProfile.completed} onClose={() => setShowFamilySetup(false)} onSave={finishFamilySetup} />
+      )}
+      {showElderProfile && (
+        <ElderProfileModal profile={elderProfile} onClose={() => setShowElderProfile(false)} onSave={finishElderProfile} />
+      )}
+      {showFitnessPlan && (
+        <FitnessPlanModal
+          plan={fitnessTrainingPlan}
+          onClose={() => setShowFitnessPlan(false)}
+          onSave={(nextPlan) => {
+            updateFitnessPlan(nextPlan, '本周训练计划已保存，小饭会按每天的类型、时长和强度给建议。')
+            setShowFitnessPlan(false)
+          }}
+        />
       )}
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onToast={setToast} onAuthenticated={handleAuthenticated} />}
       {showShare && <ShareModal onClose={() => setShowShare(false)} onToast={setToast} />}
-      {showSettings && <SettingsModal account={account} initialSection={settingsInitialSection} isPro={isPro} onClose={() => setShowSettings(false)} onOpenReadme={() => { if (window.mealDesktop?.openReadme) window.mealDesktop.openReadme(); else window.open('/README.md', '_blank') }} />}
+      {showSettings && <SettingsModal account={account} initialSection={settingsInitialSection} membership={membership} onClose={() => setShowSettings(false)} onOpenDocument={openHelpDocument} />}
       {editingMeal && (
         <MealEditor
           meal={editingMeal}
@@ -557,171 +609,32 @@ function App() {
   )
 }
 
-function Sidebar({ activePage, onNavigate, modules: moduleItems, activeModule, onChooseModule, isPro, onOpenMembership, onOpenSettings }) {
-  const primaryNav = [
-    { id: 'today', label: '好吃的今天', icon: Home },
-    { id: 'calendar', label: '餐食日历', icon: CalendarDays },
-    { id: 'library', label: '八大菜系库', icon: Search },
-    { id: 'report', label: '营养报告', icon: BarChart3 },
-    { id: 'favorites', label: '我的收藏', icon: Heart },
-  ]
-
-  return (
-    <aside className="sidebar">
-      <div className="brand">
-        <div className="brand-mark"><span>吃</span><i /></div>
-        <div><strong>好吃的今天</strong><small>一日三餐 · 不再为难</small></div>
-      </div>
-
-      <nav className="primary-nav">
-        <div className="nav-caption">我的餐桌</div>
-        {primaryNav.map((item) => {
-          const Icon = item.icon
-          return (
-            <button
-              key={item.id}
-              className={activePage === item.id ? 'active' : ''}
-              onClick={() => onNavigate(item.id)}
-            >
-              <Icon size={19} strokeWidth={2.1} />
-              <span>{item.label}</span>
-              {item.id === 'report' && <em>NEW</em>}
-            </button>
-          )
-        })}
-      </nav>
-
-      <div className="module-nav">
-        <div className="nav-caption">场景模式 <span>换个口味</span></div>
-        {moduleItems.map((item) => {
-          const Icon = item.icon
-          return (
-            <button
-              key={item.id}
-              className={activeModule === item.id ? 'active' : ''}
-              onClick={() => onChooseModule(item)}
-              style={{ '--module-color': item.color, '--module-pale': item.pale }}
-            >
-              <span className="module-icon"><Icon size={17} /></span>
-              <span>{item.name}</span>
-              {item.pro && !isPro && <LockKeyhole className="module-lock" size={13} />}
-              {item.pro && isPro && <span className="tiny-pro">PRO</span>}
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="sidebar-spacer" />
-      {!isPro && (
-        <button className="pro-card" onClick={onOpenMembership}>
-          <span className="pro-shine"><Sparkles size={15} /></span>
-          <strong>升级 Pro 饭搭子</strong>
-          <small>解锁全家 · 乐龄 · 健身</small>
-          <i><Zap size={12} fill="currentColor" /> 限时体验</i>
-        </button>
-      )}
-      {isPro && (
-        <div className="pro-active-card">
-          <span>👑</span><div><strong>Pro 饭搭子</strong><small>所有场景已解锁</small></div>
-        </div>
-      )}
-      <button className="settings-link" onClick={onOpenSettings}><Settings size={17} /> 设置与帮助</button>
-    </aside>
-  )
-}
-
-function Topbar({ module, onProfile, onLogin, onLogout, account, onSearch, onToast }) {
-  const [clock, setClock] = useState(() => new Date())
-  const dateText = formatChinaHeader(clock)
-  const notificationRef = useRef(null)
-  const [showNotifications, setShowNotifications] = useState(false)
-  const [readNotificationIds, setReadNotificationIds] = useState(() => {
-    try {
-      const savedIds = JSON.parse(window.localStorage.getItem('mealReadNotificationIds'))
-      return Array.isArray(savedIds) ? savedIds : []
-    } catch {
-      return []
-    }
-  })
-  const unreadCount = publishedNotifications.filter((item) => !readNotificationIds.includes(item.id)).length
-  const accountLabel = account?.displayName || account?.identifierHint || '小饭同学'
-  const accountMeta = account ? (account.identifierHint || '账号已验证') : '今日状态：嘴馋'
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setClock(new Date()), 30_000)
-    return () => window.clearInterval(timer)
-  }, [])
-
-  useEffect(() => {
-    if (!showNotifications) return undefined
-    function closeNotifications(event) {
-      if (!notificationRef.current?.contains(event.target)) setShowNotifications(false)
-    }
-    function closeOnEscape(event) {
-      if (event.key === 'Escape') setShowNotifications(false)
-    }
-    window.addEventListener('pointerdown', closeNotifications)
-    window.addEventListener('keydown', closeOnEscape)
-    return () => {
-      window.removeEventListener('pointerdown', closeNotifications)
-      window.removeEventListener('keydown', closeOnEscape)
-    }
-  }, [showNotifications])
-
-  function saveReadNotifications(ids) {
-    setReadNotificationIds(ids)
-    window.localStorage.setItem('mealReadNotificationIds', JSON.stringify(ids))
-  }
-
-  function openNotification(notification) {
-    if (!readNotificationIds.includes(notification.id)) saveReadNotifications([...readNotificationIds, notification.id])
-    setShowNotifications(false)
-    onToast(`${notification.title}：${notification.description}`)
-  }
-
-  return (
-    <header className="topbar">
-      <div className="drag-area" />
-      <div className="topbar-title">
-        <span className="eyebrow">{dateText}</span>
-        <div><h1>{module.name}</h1><span className="topbar-mood">{module.emoji} {module.subtitle}</span></div>
-      </div>
-      <div className="topbar-actions">
-        <button className="search-pill" type="button" onClick={onSearch} aria-label="搜索食谱和食材" aria-keyshortcuts="Control+K"><Search size={17} /><span>搜食谱、食材</span><kbd>Ctrl K</kbd></button>
-        <div className="notification-wrap" ref={notificationRef}>
-          <button className={`icon-button ${showNotifications ? 'active' : ''}`} type="button" onClick={() => setShowNotifications((current) => !current)} aria-label={`通知中心，${unreadCount}条未读`} aria-expanded={showNotifications}><Bell size={19} />{unreadCount > 0 && <i />}</button>
-          {showNotifications && (
-            <section className="notification-panel" aria-label="已发布通知">
-              <div className="notification-head"><div><strong>通知中心</strong><small>{unreadCount ? `${unreadCount} 条新鲜事等你看` : '消息都看过啦，真利落'}</small></div><span>{publishedNotifications.length} 条已发布</span></div>
-              <div className="notification-list">
-                {publishedNotifications.map((notification) => {
-                  const isUnread = !readNotificationIds.includes(notification.id)
-                  return <button key={notification.id} className={isUnread ? 'unread' : ''} type="button" onClick={() => openNotification(notification)}><span>{notification.emoji}</span><div><strong>{notification.title}</strong><p>{notification.description}</p><small>{notification.time}</small></div>{isUnread && <i />}</button>
-                })}
-              </div>
-              <button className="notification-read-all" type="button" disabled={!unreadCount} onClick={() => saveReadNotifications(publishedNotifications.map((item) => item.id))}><CheckCircle2 size={15} /> 全部标为已读</button>
-            </section>
-          )}
-        </div>
-        <button className="user-chip" onClick={onProfile}>
-          <span className="avatar">小</span>
-          <span><strong>{accountLabel}</strong><small>{accountMeta}</small></span>
-          <ChevronDown size={15} />
-        </button>
-        <button className="login-link" onClick={account ? onLogout : onLogin}>{account ? '退出' : '登录'}</button>
-      </div>
-    </header>
-  )
-}
-
-function TodayView({ module, meals, onEdit, onToggleDone, onOpenAssistant, onShare, onNavigate, onOpenLibrary }) {
+function TodayView({ module, meals, onEdit, onToggleDone, onOpenAssistant, onShare, onNavigate, onOpenLibrary, fitnessTrainingPlan, todayTraining, onChangeTrainingPlan, onEditTrainingPlan, familyProfile, elderProfile, onEditFamilyProfile, onEditElderProfile }) {
   const finishedCalories = meals.filter((meal) => meal.done).reduce((sum, meal) => sum + meal.kcal, 0)
   const totalCalories = meals.reduce((sum, meal) => sum + meal.kcal, 0)
+  const familySummary = familyProfileSummary(familyProfile)
+  const elderSummary = elderProfileSummary(elderProfile)
   const moduleCopy = {
-    standard: { title: '早上好，今天也要认真吃饭呀', note: '根据你近 3 天的记录，今天适合「高纤 + 优质蛋白」组合。', badge: 'AI 今日推荐' },
-    family: { title: '开饭啦！把全家的幸福端上桌', note: '兼顾两位大人与两个孩子，今天安排少油、好嚼、孩子也爱吃。', badge: '一家四口方案' },
-    elder: { title: '慢慢吃，好好过，今天也很舒心', note: '今天建议控盐补钙，食材软烂易嚼，餐后别忘了散散步。', badge: '乐龄安心方案' },
-    fitness: { title: '练得漂亮，更要吃得明白', note: '今天是力量训练日：碳水别躲，蛋白拉满，状态直接起飞。', badge: '增肌训练日' },
+    standard: { title: '早上好，今天也要认真吃饭呀', note: '根据你近 3 天的记录，今天适合「高纤 + 优质蛋白」组合。', badge: '小饭今日推荐' },
+    family: {
+      title: '开饭啦！把全家的幸福端上桌',
+      note: `已按 ${familySummary.memberCount} 位成员、共 ${familySummary.totalPortions} 标准份来安排${familySummary.avoidanceCount ? `，并避开 ${familySummary.avoidanceCount} 项忌口` : ''}。`,
+      badge: `${familySummary.memberCount} 人家庭方案`,
+    },
+    elder: {
+      title: '慢慢吃，好好过，今天也很舒心',
+      note: elderProfile.completed
+        ? `已按 ${elderSummary.goalCount} 项饮食重点调整；疾病史${elderSummary.diseaseLabel === '不愿透露' ? '保持私密，不影响继续使用' : `状态为“${elderSummary.diseaseLabel}”`}。`
+        : '可以独立设置进食习惯和饮食重点；疾病史不想填写时可直接选择“不愿透露”。',
+      badge: elderProfile.completed ? '我的乐龄方案' : '乐龄安心方案',
+    },
+    fitness: {
+      title: '练得漂亮，更要吃得明白',
+      note: todayTraining.isRestDay
+        ? '今天安排休息恢复：蛋白质保持稳定，碳水按活动量适当回落。'
+        : `今天有${todayTraining.sessions.length}项训练：${todayTraining.displayName}，共 ${todayTraining.totalDurationMinutes} 分钟，小饭会综合训练量调整补给。`,
+      badge: todayTraining.isRestDay ? '恢复休息日' : `${todayTraining.sessions.length} 项训练 · ${todayTraining.totalDurationMinutes} 分钟`,
+    },
   }
   const copy = moduleCopy[module.id]
 
@@ -733,15 +646,15 @@ function TodayView({ module, meals, onEdit, onToggleDone, onOpenAssistant, onSha
           <h2>{copy.title}</h2>
           <p>{copy.note}</p>
           <div className="welcome-actions">
-            <button className="primary-button" onClick={onOpenAssistant}><Sparkles size={17} /> 让 AI 换个方案</button>
+            <button className="primary-button" onClick={onOpenAssistant}><Sparkles size={17} /> {module.id === 'fitness' ? '让小饭按训练建议' : '让小饭换个方案'}</button>
             <button className="soft-button" onClick={() => onNavigate('calendar')}><CalendarDays size={17} /> 查看本周</button>
           </div>
         </div>
-        {module.id === 'family' ? <FamilyIllustration /> : module.id === 'elder' ? <ElderIllustration /> : module.id === 'fitness' ? <FitnessIllustration /> : <FoodIllustration />}
-        <div className="hero-scribble">好好吃饭<br />就是头等大事</div>
+        {module.id === 'family' ? <FamilyIllustration members={familyProfile.members} /> : module.id === 'elder' ? <ElderIllustration /> : module.id === 'fitness' ? <FitnessIllustration /> : <FoodIllustration />}
+        {module.id === 'standard' && <div className="hero-scribble">好好吃饭<br />就是头等大事</div>}
       </section>
 
-      {module.id !== 'standard' && <ModuleSpotlight module={module} onOpenAssistant={onOpenAssistant} />}
+      {module.id !== 'standard' && <ModuleSpotlight module={module} onOpenAssistant={onOpenAssistant} fitnessTrainingPlan={fitnessTrainingPlan} onChangeTrainingPlan={onChangeTrainingPlan} onEditTrainingPlan={onEditTrainingPlan} familyProfile={familyProfile} elderProfile={elderProfile} onEditFamilyProfile={onEditFamilyProfile} onEditElderProfile={onEditElderProfile} />}
 
       <div className="dashboard-grid">
         <section className="today-plan panel-card">
@@ -846,45 +759,37 @@ function FoodIllustration() {
   return <div className="hero-visual food-visual"><span className="plate">🍲</span><i className="leaf-one">🌿</i><i className="leaf-two">🍅</i><i className="food-dot">●</i></div>
 }
 
-function FamilyIllustration() {
-  return <div className="hero-visual people-visual"><span>👨🏻</span><span>👩🏻</span><span>👧🏻</span><span>👦🏻</span><i>一家人，吃一桌好饭</i></div>
+function FamilyIllustration({ members = [] }) {
+  return <div className="hero-visual lifestyle-visual family-lifestyle"><img src={familyDinnerImage} alt="东亚家庭围坐分享家常晚餐" /><i>{members.length} 位饭友，吃一桌好饭</i></div>
 }
 
 function ElderIllustration() {
-  return <div className="hero-visual elder-visual"><span>🫖</span><i className="elder-leaf">🍃</i><strong>清淡有味<br />岁岁安康</strong></div>
+  return <div className="hero-visual lifestyle-visual elder-lifestyle"><img src={elderTeaImage} alt="乐龄夫妇在家中安静品茶" /><i>清淡有味 · 岁岁安康</i></div>
 }
 
 function FitnessIllustration() {
-  return <div className="hero-visual fitness-visual"><span>🏋🏻</span><i>蛋白 + 碳水</i><strong>训练状态<br />拉满!</strong></div>
+  return <div className="hero-visual lifestyle-visual fitness-lifestyle"><img src={fitnessTrainingImage} alt="男士在健身房进行哑铃力量训练" /><i>训练日 · 蛋白 + 碳水</i></div>
 }
 
-function ModuleSpotlight({ module, onOpenAssistant }) {
+function ModuleSpotlight({ module, onOpenAssistant, fitnessTrainingPlan, onChangeTrainingPlan, onEditTrainingPlan, familyProfile, elderProfile, onEditFamilyProfile, onEditElderProfile }) {
   if (module.id === 'fitness') {
-    const focusAreas = [
-      ['胸肩日', '🏋🏻‍♂️', '推举训练', '蛋白 35g'],
-      ['背部日', '🧗🏻‍♂️', '拉力训练', '碳水 65g'],
-      ['腿臀日', '🏃🏻‍♂️', '深蹲训练', '补水 2.2L'],
-      ['核心日', '🤸🏻‍♂️', '稳定训练', '轻负担餐'],
-    ]
-    return (
-      <section className="module-spotlight fitness-focus">
-        <div className="spotlight-title"><span><Dumbbell size={17} /></span><div><strong>高级教练训练窗</strong><small>滑动查看不同部位的训练日营养策略</small></div></div>
-        <div className="coach-track">{focusAreas.map((item, index) => <button key={item[0]} className={index === 0 ? 'active' : ''} onClick={onOpenAssistant}><span>{item[1]}</span><div><small>{item[0]}</small><strong>{item[2]}</strong><em>{item[3]}</em></div><ChevronRight size={15} /></button>)}</div>
-      </section>
-    )
+    return <FitnessTrainingPlanner plan={fitnessTrainingPlan} onChange={onChangeTrainingPlan} onEdit={onEditTrainingPlan} onAskAssistant={onOpenAssistant} />
   }
   if (module.id === 'elder') {
+    const summary = elderProfileSummary(elderProfile)
+    const goalLabels = elderProfile.careGoals.map((goalId) => ELDER_CARE_GOALS.find((goal) => goal.id === goalId)?.label).filter(Boolean)
+    const chewingLabel = elderProfile.chewing === 'normal' ? '正常咀嚼' : elderProfile.chewing === 'soft' ? '偏好软一点' : elderProfile.chewing === 'very_soft' ? '需要软烂细碎' : '不愿透露'
     return (
       <section className="module-spotlight elder-focus">
         <div className="spotlight-title"><span><Heart size={17} /></span><div><strong>今日安心提醒</strong><small>根据健康档案动态调整，不替代医生诊疗</small></div></div>
-        <div className="elder-checks"><span><i>盐</i><div><small>今日盐量</small><strong>建议 ≤ 5g</strong></div></span><span><i>糖</i><div><small>血糖友好</small><strong>主食粗细搭配</strong></div></span><span><i>钙</i><div><small>骨骼关怀</small><strong>奶豆各一份</strong></div></span><button onClick={onOpenAssistant}>向乐龄顾问补充疾病史 <ChevronRight size={15} /></button></div>
+        <div className="elder-checks"><span><i>食</i><div><small>饮食重点</small><strong title={goalLabels.join('、')}>{goalLabels.length ? `${goalLabels.slice(0, 2).join('、')}${goalLabels.length > 2 ? `等 ${goalLabels.length} 项` : ''}` : '暂未设置'}</strong></div></span><span><i>嚼</i><div><small>咀嚼偏好</small><strong>{chewingLabel}</strong></div></span><span><i>史</i><div><small>疾病史</small><strong>{elderProfile.completed ? summary.diseaseLabel : '尚未设置'}</strong></div></span><button onClick={onEditElderProfile}><PencilLine size={15} /> 编辑健康档案</button></div>
       </section>
     )
   }
   return (
     <section className="module-spotlight family-focus">
       <div className="spotlight-title"><span><UsersRound size={17} /></span><div><strong>这一桌，人人都有份</strong><small>同一道菜按家庭成员自动调整用量与口味</small></div></div>
-      <div className="family-portions"><span><i>👨🏻</i><div><small>爸爸</small><strong>标准份 1.2×</strong></div></span><span><i>👩🏻</i><div><small>妈妈</small><strong>标准份 1.0×</strong></div></span><span><i>👧🏻</i><div><small>女儿</small><strong>儿童份 0.7×</strong></div></span><span><i>👦🏻</i><div><small>儿子</small><strong>幼儿份 0.5×</strong></div></span><button onClick={onOpenAssistant}>问问怎么一锅多吃 <ChevronRight size={15} /></button></div>
+      <div className="family-portions">{familyProfile.members.map((member) => <span key={member.id}><i>{member.icon}</i><div><small>{member.role}</small><strong>{member.portionMultiplier.toFixed(1)}× · {member.ageGroup}</strong></div></span>)}<button onClick={onEditFamilyProfile}><PencilLine size={15} /> 编辑家庭档案</button></div>
     </section>
   )
 }
@@ -1402,16 +1307,33 @@ class AssistantErrorBoundary extends Component {
   }
 }
 
-function AssistantPanel({ module, meals, mealHistory, onClose, onConfigureAi }) {
-  const [messages, setMessages] = useState([{ role: 'assistant', content: `嗨，我是小饭！${module.emoji}\n现在是「${module.name}」，你可以告诉我想吃什么、家里有啥菜，或者直接问“今晚怎么安排？”` }])
+function AssistantPanel({ module, meals, mealHistory, fitnessTrainingPlan, familyProfile, elderProfile, onClose, onConfigureAi }) {
+  const fitnessContext = useMemo(() => module.id === 'fitness' ? buildFitnessTrainingContext(fitnessTrainingPlan, getChinaToday()) : null, [fitnessTrainingPlan, module.id])
+  const familyContext = useMemo(() => module.id === 'family' ? buildFamilyProfileContext(familyProfile) : null, [familyProfile, module.id])
+  const elderContext = useMemo(() => module.id === 'elder' ? buildElderProfileContext(elderProfile) : null, [elderProfile, module.id])
+  const fitnessSummary = fitnessContext?.today.sessions.map((session) => session.type).join(' + ') || ''
+  const fitnessIntensity = fitnessContext?.today.sessions.some((session) => session.intensity === '高') ? '含高强度' : fitnessContext?.today.sessions.some((session) => session.intensity === '中等') ? '最高中等强度' : '低强度'
+  const familySummaryText = familyContext ? `${familyContext.memberCount} 位饭友的饭量与忌口` : ''
+  const elderSummaryText = elderContext ? `饮食重点与${elderContext.diseaseDisclosure === 'not_disclosed' ? '疾病史隐私选择' : '健康档案'}` : ''
+  const [messages, setMessages] = useState([{ role: 'assistant', content: fitnessContext
+    ? `嗨，我是小饭！${module.emoji}\n今天安排了${fitnessSummary}，共 ${fitnessContext.today.totalDurationMinutes} 分钟（${fitnessIntensity}）。我会结合每一段训练和当前三餐，帮你安排训练前后怎么吃。`
+    : familyContext
+      ? `嗨，我是小饭！${module.emoji}\n我会结合${familySummaryText}来安排一桌饭，并分别说明份量和替换方法。`
+      : elderContext
+        ? `嗨，我是小饭！${module.emoji}\n我会结合已填写的${elderSummaryText}给饮食建议；未透露的疾病信息不会被猜测或追问。`
+        : `嗨，我是小饭！${module.emoji}\n现在是「${module.name}」，你可以告诉我想吃什么、家里有啥菜，或者直接问“今晚怎么安排？”` }])
   const [input, setInput] = useState('')
   const [isThinking, setIsThinking] = useState(false)
-  const [connectionNote, setConnectionNote] = useState('正在连接平台 AI…')
+  const [connectionNote, setConnectionNote] = useState('正在连接小饭 AI…')
   const [connectionState, setConnectionState] = useState('checking')
   const endRef = useRef(null)
   const revealTimerRef = useRef(null)
   const mealContextFingerprint = meals.map(({ type, title, description, kcal, portionMultiplier }) => `${type}|${title}|${description}|${kcal}|${portionMultiplier}`).join('||')
-  const mealContextRef = useRef(mealContextFingerprint)
+  const fitnessContextFingerprint = fitnessContext?.week.map((item) => `${item.day}|${item.sessions.map((session) => `${session.type}|${session.durationMinutes}|${session.intensity}`).join('+')}`).join('||') || ''
+  const familyContextFingerprint = familyContext ? JSON.stringify(familyContext) : ''
+  const elderContextFingerprint = elderContext ? JSON.stringify(elderContext) : ''
+  const liveContextFingerprint = `${module.id}##${mealContextFingerprint}##${fitnessContextFingerprint}##${familyContextFingerprint}##${elderContextFingerprint}`
+  const mealContextRef = useRef(liveContextFingerprint)
   const requestRevisionRef = useRef(0)
 
   useEffect(() => {
@@ -1424,7 +1346,7 @@ function AssistantPanel({ module, meals, mealHistory, onClose, onConfigureAi }) 
       if (!window.mealDesktop?.getAiConfig) {
         if (active) {
           setConnectionState('preview')
-          setConnectionNote('网页预览未连接外部 AI')
+          setConnectionNote('网页预览未连接小饭 AI')
         }
         return
       }
@@ -1436,16 +1358,16 @@ function AssistantPanel({ module, meals, mealHistory, onClose, onConfigureAi }) 
             setConnectionNote(config.configurationIssue)
           } else if (config?.configured) {
             setConnectionState('configured')
-            setConnectionNote(`${config.providerName} · ${config.model} · 平台托管`)
+            setConnectionNote(`${config.serviceName || '小饭 AI'} · 平台托管`)
           } else {
             setConnectionState('unconfigured')
-            setConnectionNote('平台 DeepSeek 暂未就绪')
+            setConnectionNote('小饭 AI 暂未就绪')
           }
         }
       } catch {
         if (active) {
           setConnectionState('error')
-          setConnectionNote('平台 AI 状态读取失败')
+          setConnectionNote('小饭 AI 状态读取失败')
         }
       }
     }
@@ -1457,8 +1379,8 @@ function AssistantPanel({ module, meals, mealHistory, onClose, onConfigureAi }) 
   }, [])
 
   useEffect(() => {
-    if (mealContextRef.current === mealContextFingerprint) return
-    mealContextRef.current = mealContextFingerprint
+    if (mealContextRef.current === liveContextFingerprint) return
+    mealContextRef.current = liveContextFingerprint
     requestRevisionRef.current += 1
     if (revealTimerRef.current) {
       window.clearInterval(revealTimerRef.current)
@@ -1466,8 +1388,11 @@ function AssistantPanel({ module, meals, mealHistory, onClose, onConfigureAi }) 
     }
     setIsThinking(false)
     const currentPlan = meals.map((meal) => `${meal.type}“${meal.title}”`).join('、')
-    setMessages([{ role: 'assistant', content: `看到你更新餐桌啦！接下来的回答会以当前安排为准：${currentPlan || '今天还没有安排餐食'}。` }])
-  }, [mealContextFingerprint, meals])
+    const trainingNote = fitnessContext ? `；今天安排${fitnessSummary}，共 ${fitnessContext.today.totalDurationMinutes} 分钟（${fitnessIntensity}）` : ''
+    const familyNote = familyContext ? `；已读取 ${familySummaryText}` : ''
+    const elderNote = elderContext ? `；已读取${elderSummaryText}` : ''
+    setMessages([{ role: 'assistant', content: `看到你的安排更新啦！接下来的回答会以当前数据为准：${currentPlan || '今天还没有安排餐食'}${trainingNote}${familyNote}${elderNote}。` }])
+  }, [liveContextFingerprint, meals, fitnessContext, familyContext, elderContext])
 
   function revealAssistantReply(content) {
     const fullText = String(content || '')
@@ -1509,6 +1434,9 @@ function AssistantPanel({ module, meals, mealHistory, onClose, onConfigureAi }) 
       const context = {
         currentMeals: meals.map(({ type, title, description, kcal, portionMultiplier }) => ({ type, title, description, kcal, portionMultiplier })),
         recentMeals: mealHistory.slice(-12).map(({ type, title, description, kcal, portionMultiplier }) => ({ type, title, description, kcal, portionMultiplier })),
+        fitnessTraining: fitnessContext,
+        familyProfile: familyContext,
+        elderProfile: elderContext,
       }
       const rawResponse = window.mealDesktop ? await window.mealDesktop.chat({ module: module.id, messages: apiMessages, context }) : { demo: true, reason: 'browser_preview' }
       if (requestRevision !== requestRevisionRef.current) return
@@ -1516,26 +1444,26 @@ function AssistantPanel({ module, meals, mealHistory, onClose, onConfigureAi }) 
       if (response.apiError) {
         setConnectionState('error')
         setConnectionNote(`连接失败：${response.apiError}`)
-        revealAssistantReply(`这次没有拿到 DeepSeek 的回答：${response.apiError}\n请稍后再试；若持续失败，请让管理员检查后台密钥池。`)
+        revealAssistantReply(`这次没有拿到小饭 AI 的回答：${response.apiError}\n请稍后再试；若持续失败，请联系管理员检查后台通道。`)
       } else if (response.demo) {
         const isPreview = response.reason === 'browser_preview'
         setConnectionState(isPreview ? 'preview' : 'unconfigured')
-        setConnectionNote(isPreview ? '网页预览未连接平台 AI' : '平台 DeepSeek 暂未就绪')
+        setConnectionNote(isPreview ? '网页预览未连接小饭 AI' : '小饭 AI 暂未就绪')
         revealAssistantReply(isPreview
-          ? '当前是网页预览，没有连接平台 AI；请在 Windows 桌面版中使用小饭。'
-          : '平台 DeepSeek 暂未就绪，请稍后再试或联系管理员检查后台密钥池。')
+          ? '当前是网页预览，没有连接小饭 AI；请在 Windows 桌面版中使用。'
+          : '小饭 AI 暂未就绪，请稍后再试或联系管理员检查后台通道。')
       } else if (typeof response.content === 'string' && response.content.trim()) {
         setConnectionState('connected')
-        setConnectionNote(`${response.provider} · ${response.model} · 本次请求成功`)
+        setConnectionNote('小饭 AI · 本次请求成功')
         revealAssistantReply(response.content)
       } else {
         setConnectionState('error')
-        setConnectionNote('AI 返回内容异常')
-        revealAssistantReply('真实 AI 没有返回有效内容，请稍后重试或检查 AI 设置。')
+        setConnectionNote('小饭 AI 返回内容异常')
+        revealAssistantReply('小饭 AI 没有返回有效内容，请稍后重试或检查服务设置。')
       }
     } catch {
       setConnectionState('error')
-      setConnectionNote('平台 AI 请求异常')
+      setConnectionNote('小饭 AI 请求异常')
       setMessages((current) => [...current, { role: 'assistant', content: '锅里刚刚冒了点小状况，AI 暂时没接上。你可以稍后再试，现有菜单不会受影响。' }])
       setIsThinking(false)
     }
@@ -1543,8 +1471,8 @@ function AssistantPanel({ module, meals, mealHistory, onClose, onConfigureAi }) 
 
   return (
       <div className={`assistant-panel ai-status-${connectionState}`}>
-      <div className="assistant-head"><div className="assistant-avatar">饭<i /></div><div><strong>小饭 AI</strong><span><i /> {connectionState === 'connected' ? 'DeepSeek 在线' : connectionState === 'configured' ? '平台 AI 已就绪' : connectionState === 'checking' ? '正在检查连接' : connectionState === 'error' ? '连接异常' : '平台 AI 未就绪'} · 只聊吃饭</span></div><button onClick={onClose}><X size={19} /></button></div>
-      <div className="assistant-context"><span>{module.emoji}</span><p>已进入 <strong>{module.name}</strong><br /><small>回答会结合近三天记录与当前场景</small></p><button className="assistant-configure" onClick={onConfigureAi} title="查看 AI 服务"><ShieldCheck size={16} /><small>{connectionNote}</small></button></div>
+      <div className="assistant-head"><div className="assistant-avatar">饭<i /></div><div><strong>小饭 AI</strong><span><i /> {connectionState === 'connected' ? '小饭 AI 在线' : connectionState === 'configured' ? '小饭 AI 已就绪' : connectionState === 'checking' ? '正在检查连接' : connectionState === 'error' ? '连接异常' : '小饭 AI 未就绪'} · 只聊吃饭</span></div><button onClick={onClose}><X size={19} /></button></div>
+      <div className="assistant-context"><span>{module.emoji}</span><p>已进入 <strong>{module.name}</strong><br /><small>{fitnessContext ? `今天 ${fitnessContext.today.sessions.length} 项训练 · 共 ${fitnessContext.today.totalDurationMinutes} 分钟` : familyContext ? `已读取 ${familyContext.memberCount} 位成员的独立设置` : elderContext ? `疾病史：${elderContext.diseaseDisclosure === 'not_disclosed' ? '不愿透露（保持私密）' : elderContext.diseaseDisclosure === 'none_known' ? '暂无已知相关疾病' : '按已填写内容使用'}` : '回答会结合近三天记录与当前场景'}</small></p><button className="assistant-configure" onClick={onConfigureAi} title="查看小饭 AI 服务"><ShieldCheck size={16} /><small>{connectionNote}</small></button></div>
       <div className="chat-scroll">
         {messages.map((message, index) => <div key={index} className={`chat-message ${message.role}`}><span>{message.role === 'assistant' ? '饭' : '我'}</span><p>{message.content}</p></div>)}
         {isThinking && <div className="chat-message assistant"><span>饭</span><p className="typing"><i /><i /><i /></p></div>}
@@ -1552,88 +1480,165 @@ function AssistantPanel({ module, meals, mealHistory, onClose, onConfigureAi }) 
       </div>
       {messages.length < 3 && <div className="quick-questions">{quickQuestions.map((question) => <button key={question} onClick={() => sendMessage(question)}>{question}</button>)}</div>}
       <div className="chat-input"><textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage() } }} placeholder="问问今晚吃什么，或者冰箱剩菜怎么救…" /><button onClick={() => sendMessage()}><Send size={18} /></button></div>
-      <small className="ai-note">AI 建议仅作饮食参考，疾病治疗请听医生的</small>
+      <small className="ai-note">小饭 AI 建议仅作饮食参考，疾病治疗请听医生的</small>
     </div>
   )
 }
 
-function ModalShell({ children, onClose, className = '' }) {
-  const modalRef = useRef(null)
+const fallbackMembershipProducts = [
+  { code: 'pro_month', name: 'Pro 饭搭子月度会员', amountFen: 2999, durationDays: 31 },
+  { code: 'pro_year', name: 'Pro 饭搭子年度会员', amountFen: 19999, durationDays: 366 },
+]
+
+function formatMoney(amountFen) {
+  return `¥${(Number(amountFen || 0) / 100).toFixed(2)}`
+}
+
+function MembershipModal({ account, onClose, onActivate, onRequireLogin, onToast }) {
+  const [productCode, setProductCode] = useState('pro_year')
+  const [products, setProducts] = useState(fallbackMembershipProducts)
+  const [providers, setProviders] = useState({})
+  const [provider, setProvider] = useState('')
+  const [order, setOrder] = useState(null)
+  const [qrDataUrl, setQrDataUrl] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const activatedOrderRef = useRef('')
 
   useEffect(() => {
-    const modal = modalRef.current
-    const preferredField = modal?.querySelector('input:not([disabled]), textarea:not([disabled]), select:not([disabled])')
-    const firstControl = modal?.querySelector('button:not([disabled]), [tabindex]:not([tabindex="-1"])')
-    window.requestAnimationFrame(() => (preferredField || firstControl)?.focus())
+    let active = true
+    listBillingProducts()
+      .then((payload) => {
+        if (!active) return
+        if (payload?.products?.length) setProducts(payload.products)
+        const nextProviders = payload?.providers || {}
+        setProviders(nextProviders)
+        const firstConfigured = ['wechat', 'alipay', 'dev'].find((key) => nextProviders[key]?.configured)
+        setProvider(firstConfigured || '')
+      })
+      .catch((caughtError) => {
+        if (active) setError(caughtError.message || '会员服务暂时不可用。')
+      })
+    return () => { active = false }
   }, [])
 
-  function handleKeyDown(event) {
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      onClose()
+  useEffect(() => {
+    let active = true
+    if (!order?.qrPayload) {
+      setQrDataUrl('')
+      return () => { active = false }
+    }
+    QRCode.toDataURL(order.qrPayload, { width: 240, margin: 1, color: { dark: '#292620', light: '#ffffff' } })
+      .then((url) => { if (active) setQrDataUrl(url) })
+      .catch(() => { if (active) setError('付款码生成失败，请重新下单。') })
+    return () => { active = false }
+  }, [order?.qrPayload])
+
+  useEffect(() => {
+    if (!order?.id || order.status !== 'pending') return undefined
+    let active = true
+    let timer = null
+    async function pollOrder() {
+      try {
+        const payload = await readBillingOrder(order.id)
+        if (!active) return
+        setOrder(payload.order)
+        if (payload.order?.status === 'paid' && payload.membership?.isPro && activatedOrderRef.current !== payload.order.id) {
+          activatedOrderRef.current = payload.order.id
+          onActivate(payload.membership)
+          return
+        }
+        if (payload.order?.status === 'pending') timer = window.setTimeout(pollOrder, 2_000)
+      } catch (caughtError) {
+        if (active) {
+          setError(caughtError.message || '订单状态查询失败。')
+          timer = window.setTimeout(pollOrder, 4_000)
+        }
+      }
+    }
+    timer = window.setTimeout(pollOrder, 2_000)
+    return () => {
+      active = false
+      if (timer) window.clearTimeout(timer)
+    }
+  }, [order?.id, order?.status, onActivate])
+
+  const selectedProduct = products.find((item) => item.code === productCode) || products[0]
+  const configuredProviders = ['wechat', 'alipay', 'dev'].filter((key) => providers[key]?.configured)
+
+  async function startPayment() {
+    if (!account) {
+      onRequireLogin()
       return
     }
-    if (event.key !== 'Tab') return
-    const focusable = [...modalRef.current.querySelectorAll('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')]
-      .filter((element) => element.getClientRects().length > 0)
-    if (!focusable.length) return
-    const currentIndex = focusable.indexOf(document.activeElement)
-    const direction = event.shiftKey ? -1 : 1
-    const nextIndex = currentIndex < 0
-      ? (event.shiftKey ? focusable.length - 1 : 0)
-      : (currentIndex + direction + focusable.length) % focusable.length
-    const nextControl = focusable[nextIndex]
-    event.preventDefault()
-    nextControl.focus()
-    if (nextControl.matches('input, textarea') && nextControl.value) {
-      window.requestAnimationFrame(() => {
-        try {
-          nextControl.select()
-        } catch {}
-      })
+    if (!provider || !selectedProduct) {
+      setError('支付通道尚未配置，暂时无法下单。')
+      return
+    }
+    setBusy(true)
+    setError('')
+    try {
+      const idempotencyKey = window.crypto?.randomUUID?.() || `order-${Date.now()}-${Math.random().toString(16).slice(2)}`
+      const payload = await createBillingOrder({ productCode: selectedProduct.code, provider, idempotencyKey })
+      setOrder(payload.order)
+      onToast('订单已创建，请在有效期内完成支付。')
+    } catch (caughtError) {
+      setError(caughtError.message || '创建支付订单失败。')
+    } finally {
+      setBusy(false)
     }
   }
 
-  return <div className="modal-backdrop" onMouseDown={onClose}><div ref={modalRef} className={`modal-card ${className}`} role="dialog" aria-modal="true" onKeyDown={handleKeyDown} onMouseDown={(event) => event.stopPropagation()}>{children}</div></div>
-}
+  async function simulateDevelopmentPayment() {
+    if (!order?.id || busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const payload = await completeDevelopmentOrder(order.id)
+      setOrder(payload.order)
+      if (payload.membership?.isPro && activatedOrderRef.current !== payload.order.id) {
+        activatedOrderRef.current = payload.order.id
+        onActivate(payload.membership)
+      }
+    } catch (caughtError) {
+      setError(caughtError.message || '开发测试支付失败。')
+    } finally {
+      setBusy(false)
+    }
+  }
 
-function MembershipModal({ onClose, onActivate, onToast }) {
-  const [plan, setPlan] = useState('year')
   return (
     <ModalShell onClose={onClose} className="membership-modal">
       <button className="modal-close" onClick={onClose}><X size={20} /></button>
       <div className="membership-visual"><span>🥘</span><i>✨</i><strong>饭桌上的<br />全能队友</strong></div>
       <div className="membership-content"><span className="pro-label"><Sparkles size={14} /> 好吃的今天 PRO</span><h2>让每一顿，都更懂你</h2><p>三种进阶场景、专属营养分析和无限 AI 问答，一顿饭钱照顾整月餐桌。</p>
-        <div className="feature-list"><span><CheckCircle2 size={17} /> 家庭、乐龄、健身场景全解锁</span><span><CheckCircle2 size={17} /> 每周食谱与营养报告无限生成</span><span><CheckCircle2 size={17} /> DeepSeek 专属营养顾问随时问</span></div>
-        <div className="price-options">
-          <button className={plan === 'month' ? 'selected' : ''} onClick={() => setPlan('month')}><span>连续包月</span><strong>¥29.99<small>/月</small></strong><em>随时可取消</em></button>
-          <button className={plan === 'year' ? 'selected hot' : 'hot'} onClick={() => setPlan('year')}><i>🔥 HOT · 省 ¥159.89</i><span>年度饭搭子</span><strong>¥199.99<small>/年</small></strong><em>每天只要 ¥0.55</em></button>
-        </div>
-        <button className="pay-button" onClick={() => { onToast(`已选择${plan === 'year' ? '年度' : '月度'}方案，支付功能为演示模式`); onActivate() }}>先免费体验 7 天 <ChevronRight size={18} /></button>
-        <div className="pay-methods"><span>安全支付</span><i className="wechat">微</i> 微信支付 <i className="alipay">支</i> 支付宝 <ShieldCheck size={14} /></div>
+        <div className="feature-list"><span><CheckCircle2 size={17} /> 家庭、乐龄、健身场景全解锁</span><span><CheckCircle2 size={17} /> 每周食谱与营养报告无限生成</span><span><CheckCircle2 size={17} /> 小饭 AI 专属饮食顾问随时问</span></div>
+        {!order ? <>
+          <div className="price-options">
+            {products.map((item) => {
+              const yearly = item.code === 'pro_year'
+              return <button key={item.code} className={`${productCode === item.code ? 'selected ' : ''}${yearly ? 'hot' : ''}`} onClick={() => setProductCode(item.code)}>{yearly && <i>🔥 HOT · 年度更划算</i>}<span>{yearly ? '年度饭搭子' : '月度饭搭子'}</span><strong>{formatMoney(item.amountFen)}<small>/{yearly ? '年' : '月'}</small></strong><em>{item.durationDays} 天会员权益</em></button>
+            })}
+          </div>
+          <div className="payment-channel-picker">
+            {configuredProviders.length ? configuredProviders.map((key) => <button key={key} className={provider === key ? 'selected' : ''} onClick={() => setProvider(key)}><i className={key}>{key === 'wechat' ? '微' : key === 'alipay' ? '支' : '测'}</i>{providers[key].label}</button>) : <span>支付通道待后台配置</span>}
+          </div>
+          {error && <p className="payment-error">{error}</p>}
+          <button className="pay-button" onClick={startPayment} disabled={busy || (!account ? false : !provider)}>{busy ? '正在创建订单…' : !account ? '登录后购买' : `支付 ${formatMoney(selectedProduct?.amountFen)}`} <ChevronRight size={18} /></button>
+          <div className="pay-methods"><span>服务端验签到账后自动开通</span><ShieldCheck size={14} /> 商户密钥不会进入客户端</div>
+        </> : <div className="payment-order-panel">
+          <div className="payment-order-summary"><span>{order.productName || selectedProduct?.name}</span><strong>{formatMoney(order.amountFen)}</strong></div>
+          {order.status === 'pending' && <>
+            {qrDataUrl ? <img className="payment-qr" src={qrDataUrl} alt="会员支付二维码" /> : <div className="payment-qr loading">付款码生成中…</div>}
+            <p>{order.provider === 'wechat' ? '请使用微信扫码支付' : order.provider === 'alipay' ? '请使用支付宝扫码支付' : '这是开发环境测试订单，不会真实扣款'}</p>
+            <small>订单将在 {new Date(order.expiresAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} 失效 · 页面会自动确认到账</small>
+            {order.provider === 'dev' && <button className="development-pay-button" onClick={simulateDevelopmentPayment} disabled={busy}>{busy ? '正在确认…' : '模拟支付成功（不扣款）'}</button>}
+          </>}
+          {order.status !== 'pending' && order.status !== 'paid' && <p className="payment-error">{order.failureMessage || '订单已失效，请重新下单。'}</p>}
+          {error && <p className="payment-error">{error}</p>}
+          <button className="payment-back-button" onClick={() => { setOrder(null); setQrDataUrl(''); setError('') }}>返回选择方案</button>
+        </div>}
       </div>
-    </ModalShell>
-  )
-}
-
-function FamilySetupModal({ onClose, onFinish }) {
-  const [members, setMembers] = useState([
-    { role: '爸爸', icon: '👨🏻', age: '35–44 岁' },
-    { role: '妈妈', icon: '👩🏻', age: '35–44 岁' },
-    { role: '女儿', icon: '👧🏻', age: '7–12 岁' },
-    { role: '儿子', icon: '👦🏻', age: '3–6 岁' },
-  ])
-  return (
-    <ModalShell onClose={onClose} className="family-modal">
-      <button className="modal-close" onClick={onClose}><X size={20} /></button>
-      <div className="family-modal-head"><span>👨‍👩‍👧‍👦</span><div><small>先认识一下你的餐桌</small><h2>家里有几位饭友？</h2><p>不用姓名和身份信息，只为分量与营养更合适。</p></div></div>
-      <div className="member-list">
-        {members.map((member, index) => <div key={`${member.role}-${index}`} className="member-row"><span className="member-face">{member.icon}</span><input value={member.role} onChange={(event) => setMembers((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, role: event.target.value } : item))} /><select value={member.age} onChange={(event) => setMembers((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, age: event.target.value } : item))}><option>3–6 岁</option><option>7–12 岁</option><option>13–17 岁</option><option>18–34 岁</option><option>35–44 岁</option><option>45–59 岁</option><option>60 岁以上</option></select><button onClick={() => setMembers((current) => current.filter((_, itemIndex) => itemIndex !== index))}><X size={16} /></button></div>)}
-      </div>
-      <button className="add-member" onClick={() => setMembers((current) => [...current, { role: '家庭成员', icon: '🙂', age: '18–34 岁' }])}><Plus size={16} /> 再加一位</button>
-      <label className="allergy-input"><span>有没有需要避开的食物？</span><input placeholder="比如：花生过敏、不吃香菜（可不填）" /></label>
-      <div className="privacy-note"><ShieldCheck size={17} /><span>这些信息只保存在你的设备上，不涉及具体个人身份。</span></div>
-      <button className="primary-full" onClick={onFinish}>开启全家好好吃饭计划 <ArrowRight size={17} /></button>
     </ModalShell>
   )
 }
@@ -1651,7 +1656,7 @@ function MealEditor({ meal, onClose, onSave }) {
   )
 }
 
-function SettingsModal({ account: activeAccount, initialSection = 'account', isPro, onClose, onOpenReadme }) {
+function SettingsModal({ account: activeAccount, initialSection = 'account', membership, onClose, onOpenDocument }) {
   const [section, setSection] = useState(initialSection)
   const [aiConfig, setAiConfig] = useState(managedAiDefaults)
   const [aiBusy, setAiBusy] = useState(false)
@@ -1662,14 +1667,14 @@ function SettingsModal({ account: activeAccount, initialSection = 'account', isP
     let active = true
     async function loadAiConfig() {
       if (!window.mealDesktop?.getAiConfig) {
-        if (active) setAiFeedback({ type: 'warning', message: '网页预览不连接平台 AI，请在 Windows 桌面版中查看。' })
+        if (active) setAiFeedback({ type: 'warning', message: '网页预览不连接小饭 AI，请在 Windows 桌面版中查看。' })
         return
       }
       try {
         const config = await window.mealDesktop.getAiConfig()
         if (active && config) setAiConfig(config)
       } catch {
-        if (active) setAiFeedback({ type: 'error', message: '平台 AI 状态读取失败，请稍后重试。' })
+        if (active) setAiFeedback({ type: 'error', message: '小饭 AI 状态读取失败，请稍后重试。' })
       }
     }
     loadAiConfig()
@@ -1680,26 +1685,29 @@ function SettingsModal({ account: activeAccount, initialSection = 'account', isP
     if (!window.mealDesktop?.testAiConfig || aiBusy) return
     setAiBusy(true)
     setAiVerified(false)
-    setAiFeedback({ type: '', message: '正在请后台分配 DeepSeek 通道并测试…' })
+    setAiFeedback({ type: '', message: '正在连接小饭 AI 并测试服务…' })
     try {
       const result = await window.mealDesktop.testAiConfig()
       if (!result?.ok) throw new Error(result?.error || '连接测试失败。')
       setAiVerified(true)
       setAiConfig((current) => ({ ...current, configured: true, ready: true, configurationIssue: '' }))
-      setAiFeedback({ type: 'success', message: `${result.provider} · ${result.model} 后台通道正常，可以开聊啦！` })
+      setAiFeedback({ type: 'success', message: `${result.serviceName || '小饭 AI'} 后台通道正常，可以开聊啦！` })
     } catch (error) {
-      setAiFeedback({ type: 'error', message: error instanceof Error ? error.message : '平台 AI 检测失败。' })
+      setAiFeedback({ type: 'error', message: error instanceof Error ? error.message : '小饭 AI 检测失败。' })
     } finally {
       setAiBusy(false)
     }
   }
 
   const account = activeAccount || readDemoAccount()
+  const isPro = Boolean(membership?.isPro)
+  const membershipExpiry = membership?.validUntil ? new Date(membership.validUntil).toLocaleDateString('zh-CN') : '—'
   const accountLabel = account?.displayName || (account?.loginType === 'phone' ? account.phone : account?.loginType === 'email' ? account.email : account?.provider || '尚未登录')
   const settingsSections = [
     { id: 'account', label: '账号信息', icon: UserRound },
     { id: 'membership', label: '会员信息', icon: WalletCards },
-    { id: 'ai', label: 'AI 顾问', icon: Sparkles },
+    { id: 'ai', label: '小饭 AI', icon: Sparkles },
+    { id: 'shortcuts', label: '快捷键说明', icon: Keyboard },
     { id: 'help', label: '帮助中心', icon: MessageCircleMore },
   ]
   return (
@@ -1708,31 +1716,32 @@ function SettingsModal({ account: activeAccount, initialSection = 'account', isP
       <div className="settings-title"><span><Settings size={20} /></span><div><small>SETTINGS & HELP</small><h2>把你的饭碗设置好</h2></div></div>
       <div className="settings-layout"><nav>{settingsSections.map((item) => { const Icon = item.icon; return <button key={item.id} className={section === item.id ? 'active' : ''} onClick={() => setSection(item.id)}><Icon size={17} />{item.label}<ChevronRight size={14} /></button> })}</nav><section>
         {section === 'account' && <div className="settings-section"><span className="settings-kicker">ACCOUNT</span><h3>账号信息</h3><div className="account-summary"><span className="avatar">小</span><div><strong>{account ? '已登录饭友' : '游客饭友'}</strong><small>{accountLabel}</small></div><i>{account ? '已验证' : '未登录'}</i></div><div className="settings-rows"><span><em>登录方式</em><strong>{account?.loginType === 'phone' ? '手机验证码 + 密码' : account?.loginType === 'email' ? '邮箱 + 密码' : account?.provider || '—'}</strong></span><span><em>本地数据</em><strong>保存在当前设备</strong></span><span><em>账号安全</em><strong>滑块验证已开启</strong></span></div></div>}
-        {section === 'membership' && <div className="settings-section"><span className="settings-kicker">MEMBERSHIP</span><h3>会员信息</h3><div className={`membership-status ${isPro ? 'is-pro' : ''}`}><span>{isPro ? '👑' : '🍚'}</span><div><small>当前方案</small><strong>{isPro ? 'Pro 饭搭子' : '普通饭友 · 免费版'}</strong><p>{isPro ? '家庭、乐龄、健身模式均已解锁' : '日常模式永久免费，升级可解锁三种专属场景'}</p></div></div><div className="settings-rows"><span><em>月度会员</em><strong>¥29.99 / 月</strong></span><span><em>年度会员</em><strong>¥199.99 / 年 · HOT</strong></span><span><em>自动续费</em><strong>{isPro ? '演示模式' : '未开启'}</strong></span></div></div>}
+        {section === 'membership' && <div className="settings-section"><span className="settings-kicker">MEMBERSHIP</span><h3>会员信息</h3><div className={`membership-status ${isPro ? 'is-pro' : ''}`}><span>{isPro ? '👑' : '🍚'}</span><div><small>当前方案</small><strong>{isPro ? 'Pro 饭搭子' : '普通饭友 · 免费版'}</strong><p>{isPro ? '家庭、乐龄、健身模式均已解锁' : '日常模式永久免费，升级可解锁三种专属场景'}</p></div></div><div className="settings-rows"><span><em>会员有效期至</em><strong>{membershipExpiry}</strong></span><span><em>权益来源</em><strong>{isPro ? '服务端支付订单' : '暂无有效订单'}</strong></span><span><em>自动续费</em><strong>未开启</strong></span></div></div>}
         {section === 'ai' && (
           <div className="settings-section ai-settings-section">
-            <span className="settings-kicker">MANAGED DEEPSEEK</span>
-            <h3>DeepSeek 已由平台统一接管</h3>
+            <span className="settings-kicker">MANAGED MEAL AI</span>
+            <h3>小饭 AI 由平台统一托管</h3>
             <div className={`ai-connection-card ${aiVerified ? 'connected' : aiConfig.configured ? 'configured' : ''}`}>
               <span>{aiVerified ? '⚡' : aiConfig.configured ? '🛡️' : '🔌'}</span>
               <div>
-                <strong>{aiVerified ? 'DeepSeek 后台通道正常' : aiConfig.configured ? '平台 DeepSeek 已就绪' : '平台 AI 暂未就绪'}</strong>
-                <small>{aiConfig.configurationIssue || '系统会为每位用户自动分配后台密钥，无需填写任何 API Key。'}</small>
+                <strong>{aiVerified ? '小饭 AI 后台通道正常' : aiConfig.configured ? '小饭 AI 已就绪' : '小饭 AI 暂未就绪'}</strong>
+                <small>{aiConfig.configurationIssue || '系统会为每位用户自动分配后台服务通道，无需填写任何密钥。'}</small>
               </div>
               <i>{aiVerified ? '已验证' : aiConfig.configured ? '托管中' : '待后台配置'}</i>
             </div>
             <div className="ai-managed-grid">
-              <span><small>唯一服务商</small><strong>DeepSeek</strong></span>
-              <span><small>固定模型</small><strong>deepseek-chat</strong></span>
-              <span><small>密钥来源</small><strong>后台密钥池</strong></span>
+              <span><small>AI 服务</small><strong>小饭 AI</strong></span>
+              <span><small>服务模式</small><strong>平台托管</strong></span>
+              <span><small>通道来源</small><strong>后台服务池</strong></span>
               <span><small>分配方式</small><strong>按用户自动分配</strong></span>
             </div>
-            <div className="ai-security-note"><ShieldCheck size={16} /><span>用户端不会读取、保存或显示 DeepSeek API Key。后台会为匿名用户标识稳定分配一条通道，并在密钥限流或失效时自动切换。</span></div>
+            <div className="ai-security-note"><ShieldCheck size={16} /><span>用户端不会读取、保存或显示上游服务凭证。后台会为匿名用户标识稳定分配一条通道，并在通道限流或失效时自动切换。</span></div>
             {aiFeedback.message && <div className={`ai-feedback ${aiFeedback.type}`}>{aiFeedback.message}</div>}
-            <div className="ai-config-actions"><button className="primary-button" onClick={testManagedAi} disabled={aiBusy}>{aiBusy ? '检测中…' : '检测平台 AI'}</button></div>
+            <div className="ai-config-actions"><button className="primary-button" onClick={testManagedAi} disabled={aiBusy}>{aiBusy ? '检测中…' : '检测小饭 AI'}</button></div>
           </div>
         )}
-        {section === 'help' && <div className="settings-section help-section"><span className="settings-kicker">HELP CENTER</span><h3>有问题，别饿着</h3><p>README 里包含运行方法、八大菜系爬取脚本、AI 接入配置、数据库结构和健康合规说明。</p><button className="readme-button" onClick={onOpenReadme}><span><MessageCircleMore size={20} /></span><div><strong>打开 README.md 帮助文档</strong><small>使用说明 · 数据脚本 · 常见问题</small></div><ArrowRight size={17} /></button><div className="help-note"><ShieldCheck size={16} /><span>营养建议只作生活参考，疾病治疗请咨询专业医生。</span></div></div>}
+        {section === 'shortcuts' && <div className="settings-section help-section"><span className="settings-kicker">KEYBOARD SHORTCUTS</span><h3>键盘快一点，开饭早一点</h3><p>导航、搜索、小饭 AI、场景切换和窗口操作已经整理成独立 PDF，阅读时不会显示代码内容。</p><button className="readme-button" onClick={() => onOpenDocument('keyboard-shortcuts')}><span><Keyboard size={20} /></span><div><strong>打开快捷键说明 PDF</strong><small>导航操作 · 效率工具 · 窗口控制</small></div><ArrowRight size={17} /></button><div className="help-note"><Keyboard size={16} /><span>随时按 Ctrl + / 可以直接打开这份快捷键说明。</span></div></div>}
+        {section === 'help' && <div className="settings-section help-section"><span className="settings-kicker">HELP CENTER</span><h3>有问题，别饿着</h3><p>README 已整理为适合阅读的使用说明 PDF，包含主要功能、使用流程、数据安全和常见问题，不再以源码或 Markdown 形式展示。</p><button className="readme-button" onClick={() => onOpenDocument('user-guide')}><span><BookOpen size={20} /></span><div><strong>打开 README 使用说明 PDF</strong><small>快速上手 · 功能说明 · 常见问题</small></div><ArrowRight size={17} /></button><div className="help-note"><ShieldCheck size={16} /><span>营养建议只作生活参考，疾病治疗请咨询专业医生。</span></div></div>}
       </section></div>
     </ModalShell>
   )

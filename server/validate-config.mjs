@@ -41,6 +41,27 @@ export function collectConfigProblems(config) {
     problems.push('AUTH_EXPOSE_DEV_CODE=true 会把验证码写进 /api/auth/send-code 的响应体，任何人都能注册或登录任意账号。')
   }
 
+  const billing = config.billing || {}
+  if (billing.devSimulation && !config.isDevelopment) {
+    problems.push('PAYMENT_DEV_SIMULATION=true 只能用于明确的开发环境，生产环境会伪造会员到账。')
+  }
+  const wechat = billing.wechat || {}
+  const wechatValues = [wechat.mchId, wechat.appId, wechat.certificateSerial, wechat.privateKeyPath, wechat.apiV3Key, wechat.publicKeyId, wechat.publicKeyPath]
+  if (wechatValues.some(Boolean) && !wechatValues.every(Boolean)) {
+    problems.push('微信支付参数只配置了一部分，请补齐 WECHAT_PAY_* 商户参数。')
+  }
+  if (wechat.apiV3Key && String(wechat.apiV3Key).length !== 32) {
+    problems.push('WECHAT_PAY_API_V3_KEY 必须正好是 32 个字符。')
+  }
+  const alipay = billing.alipay || {}
+  const alipayValues = [alipay.appId, alipay.sellerId, alipay.privateKeyPath, alipay.publicKeyPath]
+  if (alipayValues.some(Boolean) && !alipayValues.every(Boolean)) {
+    problems.push('支付宝参数只配置了一部分，请补齐 ALIPAY_* 商户参数。')
+  }
+  if ((wechatValues.some(Boolean) || alipayValues.some(Boolean)) && !/^https:\/\//i.test(String(billing.notifyBaseUrl || ''))) {
+    problems.push('启用支付时 PAYMENT_NOTIFY_BASE_URL 必须是公网 HTTPS 地址。')
+  }
+
   return problems
 }
 

@@ -54,7 +54,7 @@ function registerWindowShortcuts(window) {
     const key = String(input.key).toLowerCase()
     const withModifier = input.control || input.meta
 
-    if (key === 'f5' || (withModifier && (key === 'r' || key === 'n'))) {
+    if (key === 'f5' || (withModifier && key === 'r')) {
       event.preventDefault()
       window.webContents.reload()
       return
@@ -86,11 +86,19 @@ ipcMain.handle('ai:chat', async (_event, payload) => {
 ipcMain.handle('ai:get-config', () => aiService.getPublicConfiguration())
 ipcMain.handle('ai:test', () => aiService.testConnection())
 
-ipcMain.handle('app:open-readme', async () => {
-  const readmePath = app.isPackaged
-    ? path.join(process.resourcesPath, 'README.md')
-    : path.join(app.getAppPath(), 'README.md')
-  const errorMessage = await shell.openPath(readmePath)
+const helpDocuments = Object.freeze({
+  'user-guide': 'hao-chi-de-jin-tian-user-guide.pdf',
+  'keyboard-shortcuts': 'hao-chi-de-jin-tian-keyboard-shortcuts.pdf',
+})
+
+ipcMain.handle('app:open-help-document', async (_event, documentId) => {
+  const fileName = helpDocuments[documentId]
+  if (!fileName) return { ok: false, error: '不支持的说明文档' }
+
+  const documentPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'docs', fileName)
+    : path.join(app.getAppPath(), 'output', 'pdf', fileName)
+  const errorMessage = await shell.openPath(documentPath)
   return { ok: !errorMessage, error: errorMessage }
 })
 

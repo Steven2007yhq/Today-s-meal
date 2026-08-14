@@ -1,0 +1,10 @@
+website/** text eol=lf
+
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.exe binary
+*.zip binary

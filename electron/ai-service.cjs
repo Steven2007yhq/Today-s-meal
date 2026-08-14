@@ -66,7 +66,7 @@ function createAiService({ app, fetchImpl = globalThis.fetch }) {
         throw timeoutError
       }
       if (!error.code && /fetch|network|socket|ENOTFOUND|ECONN/i.test(String(error.message))) {
-        error.message = '无法连接平台 AI 后台，请检查服务是否已启动。'
+        error.message = '无法连接小饭 AI 后台，请检查服务是否已启动。'
         error.code = 'network_error'
       }
       throw error
@@ -79,27 +79,25 @@ function createAiService({ app, fetchImpl = globalThis.fetch }) {
     try {
       const status = await requestGateway('/api/ai/status', { timeoutMs: 8_000 })
       return {
-        provider: 'deepseek',
-        providerName: 'DeepSeek',
-        model: 'deepseek-chat',
+        serviceId: 'meal-ai',
+        serviceName: '小饭 AI',
         endpoint: '平台托管',
         managed: true,
         configured: Boolean(status.ready),
         ready: Boolean(status.ready),
         allocation: 'server-managed',
-        configurationIssue: status.ready ? '' : '后台尚未配置 DeepSeek 密钥池。',
+        configurationIssue: status.ready ? '' : '小饭 AI 后台通道尚未就绪。',
       }
     } catch (error) {
       return {
-        provider: 'deepseek',
-        providerName: 'DeepSeek',
-        model: 'deepseek-chat',
+        serviceId: 'meal-ai',
+        serviceName: '小饭 AI',
         endpoint: '平台托管',
         managed: true,
         configured: false,
         ready: false,
         allocation: 'server-managed',
-        configurationIssue: error instanceof Error ? error.message : '平台 AI 后台暂不可用。',
+        configurationIssue: error instanceof Error ? error.message : '小饭 AI 后台暂不可用。',
       }
     }
   }
@@ -113,13 +111,13 @@ function createAiService({ app, fetchImpl = globalThis.fetch }) {
     try {
       return await requestGateway('/api/ai/chat', { method: 'POST', body: payload })
     } catch (error) {
-      if (error?.code === 'deepseek_key_pool_unconfigured') {
+      if (error?.code === 'ai_key_pool_unconfigured') {
         return { demo: true, reason: 'gateway_not_configured', configured: false }
       }
       return {
         demo: false,
         configured: true,
-        apiError: error instanceof Error ? error.message : '平台 AI 请求失败。',
+        apiError: error instanceof Error ? error.message : '小饭 AI 请求失败。',
         errorCode: error?.code || 'unknown_error',
       }
     }

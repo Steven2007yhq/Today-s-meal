@@ -1,8 +1,8 @@
 import { dishById } from '../data/dishLibrary'
+import { readJsonStorage, STORAGE_KEYS, writeJsonStorage } from './browserStorage'
 import { getFavoriteActiveCollectionId, getOrCreateMealOwnerKey, readAuthSession, setFavoriteActiveCollectionId } from './session'
 
 const favoriteApiBaseUrl = import.meta.env.VITE_IMAGE_API_URL || 'http://127.0.0.1:8787'
-const localFavoritesStorageKey = 'mealFavoritesLocalStore'
 const defaultCollectionName = '默认收藏'
 const defaultCollectionColor = '#e96f45'
 
@@ -15,16 +15,15 @@ function currentOwnerKey() {
 }
 
 function readLocalStore() {
-  try {
-    const payload = JSON.parse(window.localStorage.getItem(localFavoritesStorageKey))
-    return payload && typeof payload === 'object' ? payload : {}
-  } catch {
-    return {}
-  }
+  return readJsonStorage(
+    STORAGE_KEYS.favorites,
+    {},
+    (value) => value && typeof value === 'object' && !Array.isArray(value),
+  )
 }
 
 function writeLocalStore(store) {
-  window.localStorage.setItem(localFavoritesStorageKey, JSON.stringify(store))
+  return writeJsonStorage(STORAGE_KEYS.favorites, store)
 }
 
 function buildFallbackFavoriteCollection(ownerKey) {

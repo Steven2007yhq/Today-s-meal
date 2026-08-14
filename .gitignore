@@ -1,6 +1,8 @@
 node_modules/
 dist/
 release/
+tmp/
+output/
 
 # Secrets: only the *.example files belong in version control.
 .env

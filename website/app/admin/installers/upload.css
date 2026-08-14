@@ -1,0 +1,30 @@
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #f8f1e6; color: #35281f; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+.upload-admin { width: min(960px, calc(100% - 32px)); margin: 0 auto; padding: 54px 0 80px; }
+.upload-admin > header { display: flex; align-items: center; gap: 18px; margin-bottom: 28px; }
+.upload-admin h1 { margin: 4px 0 0; font: 700 clamp(30px, 5vw, 48px)/1.1 Georgia, "Microsoft YaHei", sans-serif; }
+.upload-admin header small { color: #a75b35; letter-spacing: .12em; }
+.upload-mark { display: grid; place-items: center; width: 62px; height: 62px; border-radius: 20px; background: #e96f3a; color: #fff; font-size: 25px; font-weight: 800; box-shadow: 0 10px 26px #c9653438; }
+.upload-token-card, .upload-list article { background: #fffdf8; border: 1px solid #eadbc9; border-radius: 22px; box-shadow: 0 14px 42px #6f493316; }
+.upload-token-card { padding: 24px; margin-bottom: 18px; }
+.upload-token-card label { display: block; font-weight: 800; margin-bottom: 9px; }
+.upload-token-card input { width: 100%; border: 1px solid #d9c5ae; border-radius: 12px; padding: 14px 16px; font-size: 15px; background: #fff; outline: none; }
+.upload-token-card input:focus { border-color: #e96f3a; box-shadow: 0 0 0 4px #e96f3a1c; }
+.upload-token-card p { margin: 10px 0 0; color: #887363; font-size: 13px; }
+.upload-list { display: grid; gap: 14px; }
+.upload-list article { display: grid; grid-template-columns: 170px 1fr auto; gap: 14px; align-items: center; padding: 22px; }
+.upload-version { display: grid; gap: 3px; }
+.upload-version strong { font-size: 22px; }
+.upload-version span { font-size: 14px; font-weight: 700; }
+.upload-version small { color: #998274; }
+.file-picker { display: block; border: 1px dashed #d6bba4; border-radius: 12px; padding: 13px 15px; color: #806557; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-picker input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.upload-list button { border: 0; border-radius: 12px; padding: 13px 18px; background: #e96f3a; color: #fff; font-weight: 800; cursor: pointer; }
+.upload-list button:disabled { opacity: .55; cursor: wait; }
+.upload-progress { grid-column: 1 / -1; height: 7px; overflow: hidden; background: #efe5d9; border-radius: 999px; }
+.upload-progress i { display: block; height: 100%; background: linear-gradient(90deg, #ee8656, #e95f30); transition: width .2s ease; }
+.upload-list article > p { grid-column: 1 / -1; margin: -4px 0 0; color: #8b7567; font-size: 13px; }
+.upload-list article > p.done { color: #3a7b55; font-weight: 700; }
+.upload-list article > p.error { color: #b34132; font-weight: 700; }
+@media (max-width: 700px) { .upload-admin { padding-top: 28px; } .upload-list article { grid-template-columns: 1fr; } .upload-list button { width: 100%; } }

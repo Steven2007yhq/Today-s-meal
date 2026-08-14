@@ -10,7 +10,9 @@ import { config } from './config.mjs'
 import { assertStartupConfig } from './validate-config.mjs'
 import { pool, withTransaction } from './db.mjs'
 import { ensureImageBucket, getSignedImageUrl, putImage } from './storage.mjs'
-import { createDeepSeekGateway, normalizeClientId } from './ai-service.mjs'
+import { createMealAiGateway, normalizeClientId } from './ai-service.mjs'
+import { BillingError, createBillingService } from './billing-service.mjs'
+import { createPaymentProviderGateway } from './payment-providers.mjs'
 import {
   createSessionToken,
   generateVerificationCode,
@@ -38,7 +40,14 @@ try {
 
 const app = express()
 const promptDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../prompts')
-const aiGateway = createDeepSeekGateway({ ...config.ai, promptDirectory })
+const aiGateway = createMealAiGateway({ ...config.ai, promptDirectory })
+const paymentGateway = createPaymentProviderGateway(config.billing)
+const billingService = createBillingService({
+  pool,
+  withTransaction,
+  paymentGateway,
+  orderTtlMinutes: config.billing.orderTtlMinutes,
+})
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 12 * 1024 * 1024, files: 1 },
@@ -49,9 +58,13 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
 app.use(cors({
   origin: config.corsOrigins,
   methods: ['GET', 'POST', 'DELETE'],
-  allowedHeaders: ['Authorization', 'Content-Type', 'X-Meal-Client-Id', 'X-Meal-Owner-Key'],
+  allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key', 'X-Meal-Client-Id', 'X-Meal-Owner-Key'],
 }))
-app.use(express.json({ limit: '128kb' }))
+function captureRawBody(request, _response, buffer) {
+  request.rawBody = buffer.toString('utf8')
+}
+app.use(express.json({ limit: '128kb', verify: captureRawBody }))
+app.use(express.urlencoded({ extended: false, limit: '64kb', verify: captureRawBody }))
 
 function requireUploadToken(request, response, next) {
   const token = request.headers.authorization?.replace(/^Bearer\s+/i, '')
@@ -219,6 +232,20 @@ async function readAuthSession(request) {
     token,
     expiresAt: result.rows[0].expires_at,
     user: serializeUser(result.rows[0]),
+  }
+}
+
+async function requireAuthSession(request, response, next) {
+  try {
+    const session = await readAuthSession(request)
+    if (!session) {
+      respondAuthError(response, 401, 'session_invalid', '登录状态已失效，请重新登录。')
+      return
+    }
+    request.authSession = session
+    next()
+  } catch (error) {
+    next(error)
   }
 }
 
@@ -630,6 +657,90 @@ app.get('/api/auth/oauth/:provider/start', async (request, response) => {
   response.json({ configured: true, provider, authorizationUrl, state })
 })
 
+app.get('/api/billing/products', async (_request, response, next) => {
+  try {
+    response.json(await billingService.listProducts())
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/api/membership/me', requireAuthSession, async (request, response, next) => {
+  try {
+    response.json({ membership: await billingService.readMembership(request.authSession.user.id) })
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.post('/api/billing/orders', requireAuthSession, async (request, response, next) => {
+  try {
+    const result = await billingService.createOrder({
+      userId: request.authSession.user.id,
+      productCode: String(request.body?.productCode || '').trim(),
+      provider: String(request.body?.provider || '').trim().toLowerCase(),
+      idempotencyKey: String(request.headers['idempotency-key'] || '').trim(),
+    })
+    response.status(result.reused ? 200 : 201).json(result)
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.get('/api/billing/orders/:orderId', requireAuthSession, async (request, response, next) => {
+  try {
+    if (!isUuid(request.params.orderId)) throw new BillingError('invalid_order_id', '订单编号无效。')
+    response.json(await billingService.readOrder(request.authSession.user.id, request.params.orderId))
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.post('/api/billing/dev/orders/:orderId/complete', requireAuthSession, async (request, response, next) => {
+  try {
+    if (!isUuid(request.params.orderId)) throw new BillingError('invalid_order_id', '订单编号无效。')
+    response.json(await billingService.completeDevelopmentOrder(request.authSession.user.id, request.params.orderId))
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.post('/api/billing/webhooks/wechat', async (request, response) => {
+  try {
+    const result = await billingService.handleNotification('wechat', {
+      headers: request.headers,
+      rawBody: request.rawBody || '',
+      body: request.body,
+    })
+    if (!result.accepted) {
+      response.status(409).json({ code: 'FAIL', message: result.message || result.code || '订单校验失败' })
+      return
+    }
+    response.json({ code: 'SUCCESS', message: '成功' })
+  } catch (error) {
+    console.warn('[billing] WeChat notification rejected:', error.message)
+    response.status(error.status || 401).json({ code: 'FAIL', message: '支付通知校验失败' })
+  }
+})
+
+app.post('/api/billing/webhooks/alipay', async (request, response) => {
+  try {
+    const result = await billingService.handleNotification('alipay', {
+      headers: request.headers,
+      rawBody: request.rawBody || '',
+      body: request.body,
+    })
+    if (!result.accepted) {
+      response.status(409).type('text/plain').send('failure')
+      return
+    }
+    response.type('text/plain').send('success')
+  } catch (error) {
+    console.warn('[billing] Alipay notification rejected:', error.message)
+    response.status(error.status || 401).type('text/plain').send('failure')
+  }
+})
+
 app.get('/api/ai/status', requireAiGatewayToken, (_request, response) => {
   response.json(aiGateway.getStatus())
 })
@@ -637,7 +748,7 @@ app.get('/api/ai/status', requireAiGatewayToken, (_request, response) => {
 app.post('/api/ai/chat', requireAiGatewayToken, requireAiClientId, async (request, response, next) => {
   try {
     if (!aiGateway.getStatus().ready) {
-      response.status(503).json({ error: 'deepseek_key_pool_unconfigured', message: '后台尚未配置 DeepSeek 密钥池。' })
+      response.status(503).json({ error: 'ai_key_pool_unconfigured', message: '小饭 AI 后台通道尚未配置。' })
       return
     }
     response.json(await aiGateway.chat(request.body, request.aiClientId))
@@ -956,6 +1067,10 @@ app.delete('/api/images/:id', requireUploadToken, async (request, response, next
 
 app.use((error, _request, response, _next) => {
   console.error(error)
+  if (error instanceof BillingError) {
+    response.status(error.status).json({ error: error.code, message: error.message })
+    return
+  }
   if (error instanceof multer.MulterError) {
     response.status(400).json({ error: error.code })
     return

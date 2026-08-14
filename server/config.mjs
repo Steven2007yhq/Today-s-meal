@@ -22,6 +22,10 @@ function numberFromEnv(name, fallback) {
   return value
 }
 
+function booleanFromEnv(name, fallback = false) {
+  return String(process.env[name] ?? fallback).trim().toLowerCase() === 'true'
+}
+
 function secretListFromEnv(...names) {
   return [...new Set(names
     .flatMap((name) => String(process.env[name] || '').split(/[\r\n,;]+/))
@@ -51,11 +55,35 @@ export const config = {
     qqRedirectUri: process.env.QQ_REDIRECT_URI || '',
   },
   ai: {
-    apiKeys: secretListFromEnv('DEEPSEEK_API_KEYS', 'DEEPSEEK_API_KEY'),
+    // Generic names are preferred. Legacy names remain supported so existing
+    // private deployments can rotate without downtime.
+    apiKeys: secretListFromEnv('MEAL_AI_API_KEYS', 'DEEPSEEK_API_KEYS', 'DEEPSEEK_API_KEY'),
     endpoint: 'https://api.deepseek.com/chat/completions',
     model: 'deepseek-chat',
     assignmentSecret: process.env.AI_ASSIGNMENT_SECRET || INSECURE_DEFAULTS.assignmentSecret,
     gatewayToken: process.env.AI_GATEWAY_TOKEN || '',
+  },
+  billing: {
+    notifyBaseUrl: process.env.PAYMENT_NOTIFY_BASE_URL || '',
+    orderTtlMinutes: numberFromEnv('PAYMENT_ORDER_TTL_MINUTES', 15),
+    devSimulation: booleanFromEnv('PAYMENT_DEV_SIMULATION'),
+    isDevelopment: nodeEnv === 'development',
+    wechat: {
+      mchId: process.env.WECHAT_PAY_MCH_ID || '',
+      appId: process.env.WECHAT_PAY_APP_ID || '',
+      certificateSerial: process.env.WECHAT_PAY_CERT_SERIAL || '',
+      privateKeyPath: process.env.WECHAT_PAY_PRIVATE_KEY_PATH || '',
+      apiV3Key: process.env.WECHAT_PAY_API_V3_KEY || '',
+      publicKeyId: process.env.WECHAT_PAY_PUBLIC_KEY_ID || '',
+      publicKeyPath: process.env.WECHAT_PAY_PUBLIC_KEY_PATH || '',
+    },
+    alipay: {
+      appId: process.env.ALIPAY_APP_ID || '',
+      sellerId: process.env.ALIPAY_SELLER_ID || '',
+      privateKeyPath: process.env.ALIPAY_PRIVATE_KEY_PATH || '',
+      publicKeyPath: process.env.ALIPAY_PUBLIC_KEY_PATH || '',
+      gateway: process.env.ALIPAY_GATEWAY || 'https://openapi.alipay.com/gateway.do',
+    },
   },
   minio: {
     endPoint: process.env.MINIO_ENDPOINT || '127.0.0.1',

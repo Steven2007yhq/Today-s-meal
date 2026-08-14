@@ -1,27 +1,18 @@
-const ownerKeyStorageKey = 'mealOwnerKey'
-const accountStorageKey = 'mealDemoAccount'
-const authSessionStorageKey = 'mealAuthSession'
-const favoriteActiveCollectionStorageKey = 'mealFavoriteActiveCollectionId'
-
-function readJsonStorage(storageKey, fallback = null) {
-  try {
-    const rawValue = window.localStorage.getItem(storageKey)
-    return rawValue ? JSON.parse(rawValue) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function writeJsonStorage(storageKey, value) {
-  window.localStorage.setItem(storageKey, JSON.stringify(value))
-}
+import {
+  readJsonStorage,
+  readStorageValue,
+  removeStorageValue,
+  STORAGE_KEYS,
+  writeJsonStorage,
+  writeStorageValue,
+} from './browserStorage'
 
 export function getOrCreateMealOwnerKey() {
   if (typeof window === 'undefined') return 'server-preview-owner'
-  const existingKey = window.localStorage.getItem(ownerKeyStorageKey)
+  const existingKey = readStorageValue(STORAGE_KEYS.ownerKey)
   if (existingKey) return existingKey
   const generatedKey = window.crypto?.randomUUID?.() || `meal-${Date.now()}-${Math.random().toString(16).slice(2)}`
-  window.localStorage.setItem(ownerKeyStorageKey, generatedKey)
+  writeStorageValue(STORAGE_KEYS.ownerKey, generatedKey)
   return generatedKey
 }
 
@@ -47,7 +38,7 @@ export function normalizeDemoAccount(account) {
 }
 
 export function readAuthSession() {
-  return readJsonStorage(authSessionStorageKey, null)
+  return readJsonStorage(STORAGE_KEYS.authSession, null)
 }
 
 export function getAuthToken() {
@@ -63,8 +54,8 @@ export function saveAuthSession(payload) {
       expiresAt: payload.session.expiresAt || '',
     },
   }
-  writeJsonStorage(authSessionStorageKey, sanitizedPayload)
-  writeJsonStorage(accountStorageKey, normalizeDemoAccount({
+  writeJsonStorage(STORAGE_KEYS.authSession, sanitizedPayload)
+  writeJsonStorage(STORAGE_KEYS.account, normalizeDemoAccount({
     ...payload.user,
     accountId: payload.user.id,
     loginType: payload.user.loginType || '',
@@ -75,8 +66,8 @@ export function saveAuthSession(payload) {
 }
 
 export function clearAuthSession() {
-  window.localStorage.removeItem(authSessionStorageKey)
-  window.localStorage.removeItem(accountStorageKey)
+  removeStorageValue(STORAGE_KEYS.authSession)
+  removeStorageValue(STORAGE_KEYS.account)
 }
 
 export function readDemoAccount() {
@@ -87,13 +78,13 @@ export function readDemoAccount() {
     loginType: authSession.user.loginType || '',
     provider: authSession.user.provider || '',
   })
-  if (typeof window !== 'undefined') window.localStorage.removeItem(accountStorageKey)
+  removeStorageValue(STORAGE_KEYS.account)
   return null
 }
 
 export function saveDemoAccount(account) {
   const normalizedAccount = normalizeDemoAccount(account) || { accountId: getOrCreateMealOwnerKey(), displayName: '小饭同学' }
-  writeJsonStorage(accountStorageKey, normalizedAccount)
+  writeJsonStorage(STORAGE_KEYS.account, normalizedAccount)
   return normalizedAccount
 }
 
@@ -103,14 +94,14 @@ export function clearDemoAccount() {
 
 export function getFavoriteActiveCollectionId() {
   if (typeof window === 'undefined') return ''
-  return window.localStorage.getItem(favoriteActiveCollectionStorageKey) || ''
+  return readStorageValue(STORAGE_KEYS.favoriteActiveCollection)
 }
 
 export function setFavoriteActiveCollectionId(collectionId) {
   if (typeof window === 'undefined') return
   if (!collectionId) {
-    window.localStorage.removeItem(favoriteActiveCollectionStorageKey)
+    removeStorageValue(STORAGE_KEYS.favoriteActiveCollection)
     return
   }
-  window.localStorage.setItem(favoriteActiveCollectionStorageKey, collectionId)
+  writeStorageValue(STORAGE_KEYS.favoriteActiveCollection, collectionId)
 }
