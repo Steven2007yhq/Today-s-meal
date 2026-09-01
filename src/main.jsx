@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import AppErrorBoundary from './components/AppErrorBoundary'
 import './styles.css'
+import './styles/dish-library.css'
 
 // The loader markup lives in index.html so it paints before this bundle arrives.
 // On a slow connection it simply stays up until the app is ready to draw.

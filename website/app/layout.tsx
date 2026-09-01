@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 
 const title = "好吃的今天 - 一日三餐，不再为难";
-const description = "面向个人与家庭的智能饮食规划 Windows 桌面应用。用三餐计划、中华菜品库、饭量记录和小饭 AI，让每天吃什么变得更轻松。";
+const description = "面向个人与家庭的智能饮食规划 Windows 桌面应用。用 5,000 道中华菜品、多食材配方换算、三餐计划和小饭 AI，让每天吃什么变得更轻松。";
 
 export async function generateMetadata(): Promise<Metadata> {
   const incomingHeaders = await headers();

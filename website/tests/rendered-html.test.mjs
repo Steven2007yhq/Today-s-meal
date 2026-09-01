@@ -20,6 +20,11 @@ test("renders the official product site with download center", async () => {
   assert.match(html, /<title>好吃的今天 - 一日三餐，不再为难<\/title>/);
   assert.match(html, /把每天吃什么/);
   assert.match(html, /小饭 AI/);
+  assert.match(html, /多食材最小二乘拟合/);
+  assert.match(html, /86<sup>\/86<\/sup>/);
+  assert.match(html, /70\.1%/);
+  assert.match(html, /2026-08-14 的 v1\.1\.0/);
+  assert.match(html, /\/docs\/README\.pdf/);
   assert.match(html, /\/api\/downloads\/1\.1\.0/);
   assert.match(html, /\/api\/downloads\/1\.0\.4/);
   assert.match(html, /\/api\/downloads\/1\.0\.3/);

@@ -7,7 +7,7 @@ export const releases = [
     objectKey: "installers/hao-chi-de-jin-tian-setup-1.1.0.exe",
     fileName: "hao-chi-de-jin-tian-setup-1.1.0.exe",
     recommended: true,
-    summary: "当前推荐的封闭测试版本，包含最新品牌、导航和帮助体验。",
+    summary: "2026-08-14 打包的当前推荐封闭测试版本；后续开发能力尚未全部进入此安装包。",
     highlights: ["小饭 AI 统一品牌", "后退 / 前进与完整快捷键", "PDF 使用说明与安全边界"],
   },
   {

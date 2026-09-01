@@ -1,6 +1,6 @@
 {
   "name": "jin-tian-chi-sha",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "author": "好吃的今天产品团队",
@@ -28,6 +28,8 @@
     "server:dev": "node --watch server/index.mjs",
     "images:migrate": "node scripts/upload_local_dish_images.mjs",
     "images:figure": "node scripts/upload_figure_images.mjs",
+    "images:category": "node scripts/upload_category_reference_images.mjs",
+    "images:coverage": "node scripts/audit_dish_image_coverage.mjs",
     "catalog:seasonal": "node scripts/sync_seasonal_catalog.mjs",
     "docs:pdf": "python scripts/build_help_pdfs.py"
   },

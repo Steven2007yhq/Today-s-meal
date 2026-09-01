@@ -13,6 +13,8 @@ import { ensureImageBucket, getSignedImageUrl, putImage } from './storage.mjs'
 import { createMealAiGateway, normalizeClientId } from './ai-service.mjs'
 import { BillingError, createBillingService } from './billing-service.mjs'
 import { createCatalogService } from './catalog-service.mjs'
+import { createDishImageCandidateCache } from './dish-image-candidate-cache.mjs'
+import { createDishImageMatcher } from '../shared/dish-image-matcher.mjs'
 import { createPaymentProviderGateway } from './payment-providers.mjs'
 import {
   createSessionToken,
@@ -50,6 +52,26 @@ const billingService = createBillingService({
   orderTtlMinutes: config.billing.orderTtlMinutes,
 })
 const catalogService = createCatalogService({ pool })
+const imageCandidateCache = createDishImageCandidateCache({
+  loadCandidates: async () => {
+    const result = await pool.query(
+      `SELECT DISTINCT ON (image.dish_id)
+         image.*,
+         COALESCE(NULLIF(image.metadata->>'visualName', ''), dish.name) AS name,
+         COALESCE(NULLIF(image.metadata->>'visualCuisine', ''), dish.cuisine) AS cuisine,
+         COALESCE(NULLIF(image.metadata->>'visualMethod', ''), dish.method) AS method,
+         COALESCE(image.metadata->'visualTaste', dish.taste, '[]'::jsonb) AS taste,
+         COALESCE(image.metadata->'visualIngredients', dish.ingredients, '[]'::jsonb) AS ingredients,
+         COALESCE(NULLIF(image.metadata->>'visualDishType', ''), dish.dish_type) AS dish_type
+       FROM media.dish_images image
+       LEFT JOIN catalog.dishes dish ON dish.id = image.dish_id
+       WHERE image.deleted_at IS NULL
+         AND (dish.publication_status = 'published' OR image.metadata->>'collection' LIKE 'category-reference%')
+       ORDER BY image.dish_id, image.created_at DESC`,
+    )
+    return result.rows
+  },
+})
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 12 * 1024 * 1024, files: 1 },
@@ -117,6 +139,38 @@ function requireAiClientId(request, response, next) {
 
 function isValidDishId(value) {
   return typeof value === 'string' && /^[a-z0-9][a-z0-9-]{1,99}$/.test(value)
+}
+
+function normalizeImageProfileText(value, maxLength) {
+  return String(value || '').normalize('NFKC').trim().slice(0, maxLength)
+}
+
+function normalizeImageProfileList(value, maxItems = 12) {
+  try {
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value
+    if (!Array.isArray(parsed)) return []
+    return [...new Set(parsed
+      .map((item) => normalizeImageProfileText(typeof item === 'string' ? item : item?.name, 80))
+      .filter(Boolean))]
+      .slice(0, maxItems)
+  } catch {
+    return []
+  }
+}
+
+function imageUploadMetadata({ file, originalFileName, collection, visualName, visualCuisine, visualMethod, visualDishType, visualIngredients, visualTaste }) {
+  return {
+    originalFileName: String(originalFileName || file.originalname).replace(/[\\/]/g, '').slice(0, 255),
+    collection: String(collection).replace(/[^a-z0-9_-]/gi, '').slice(0, 80),
+    originalMimeType: file.mimetype,
+    originalSizeBytes: file.size,
+    visualName: normalizeImageProfileText(visualName, 120),
+    visualCuisine: normalizeImageProfileText(visualCuisine, 40),
+    visualMethod: normalizeImageProfileText(visualMethod, 60),
+    visualDishType: normalizeImageProfileText(visualDishType, 40),
+    visualIngredients: normalizeImageProfileList(visualIngredients),
+    visualTaste: normalizeImageProfileList(visualTaste, 6),
+  }
 }
 
 function isUuid(value) {
@@ -813,14 +867,60 @@ app.get('/api/images', async (request, response, next) => {
       response.json({ images: [] })
       return
     }
-    const result = await pool.query(
+    const directResult = await pool.query(
       `SELECT DISTINCT ON (dish_id) *
        FROM media.dish_images
        WHERE dish_id = ANY($1::varchar[]) AND deleted_at IS NULL
        ORDER BY dish_id, created_at DESC`,
       [dishIds],
     )
-    response.json({ images: await Promise.all(result.rows.map(serializeImage)) })
+    const directByDishId = new Map(directResult.rows.map((row) => [row.dish_id, row]))
+    const missingDishIds = dishIds.filter((dishId) => !directByDishId.has(dishId))
+    const matches = new Map()
+
+    if (missingDishIds.length) {
+      try {
+        const [dishResult, candidates] = await Promise.all([
+          pool.query(
+            `SELECT id, name, cuisine, method, taste, ingredients, dish_type
+             FROM catalog.dishes
+             WHERE id = ANY($1::varchar[]) AND publication_status = 'published'`,
+            [missingDishIds],
+          ),
+          imageCandidateCache.read(),
+        ])
+        const findImageMatch = createDishImageMatcher(candidates)
+        for (const dish of dishResult.rows) {
+          const match = findImageMatch(dish)
+          if (match) matches.set(dish.id, match)
+        }
+      } catch (error) {
+        console.warn('[images] Similar-image fallback unavailable:', error.message)
+      }
+    }
+
+    const serializedCache = new Map()
+    async function serialized(row) {
+      if (!serializedCache.has(row.id)) serializedCache.set(row.id, serializeImage(row))
+      return serializedCache.get(row.id)
+    }
+    const images = await Promise.all(dishIds.map(async (dishId) => {
+      const direct = directByDishId.get(dishId)
+      if (direct) return serialized(direct)
+      const match = matches.get(dishId)
+      if (!match) return null
+      const sourceImage = await serialized(match.candidate)
+      return {
+        ...sourceImage,
+        dishId,
+        reused: true,
+        sourceDishId: sourceImage.dishId,
+        sourceDishName: match.candidate.name,
+        matchReason: match.reason,
+        matchScore: match.score,
+      }
+    }))
+    response.json({ images: images.filter(Boolean) })
   } catch (error) {
     next(error)
   }
@@ -1023,7 +1123,20 @@ app.delete('/api/favorites/:dishId', async (request, response, next) => {
 
 app.post('/api/images', requireUploadToken, upload.single('image'), async (request, response, next) => {
   try {
-    const { dishId, sourceUrl = '', licenseType, attribution = '', originalFileName = '', collection = '' } = request.body
+    const {
+      dishId,
+      sourceUrl = '',
+      licenseType,
+      attribution = '',
+      originalFileName = '',
+      collection = '',
+      visualName = '',
+      visualCuisine = '',
+      visualMethod = '',
+      visualDishType = '',
+      visualIngredients = [],
+      visualTaste = [],
+    } = request.body
     if (!isValidDishId(dishId)) {
       response.status(400).json({ error: 'invalid_dish_id' })
       return
@@ -1039,13 +1152,33 @@ app.post('/api/images', requireUploadToken, upload.single('image'), async (reque
       return
     }
 
+    const uploadMetadata = imageUploadMetadata({
+      file: request.file,
+      originalFileName,
+      collection,
+      visualName,
+      visualCuisine,
+      visualMethod,
+      visualDishType,
+      visualIngredients,
+      visualTaste,
+    })
+
     const sha256 = crypto.createHash('sha256').update(request.file.buffer).digest('hex')
     const existing = await pool.query(
       'SELECT * FROM media.dish_images WHERE dish_id = $1 AND sha256 = $2 AND deleted_at IS NULL LIMIT 1',
       [dishId, sha256],
     )
     if (existing.rowCount) {
-      response.status(200).json({ image: await serializeImage(existing.rows[0]), deduplicated: true })
+      const refreshed = await pool.query(
+        `UPDATE media.dish_images
+         SET source_url = NULLIF($2, ''), license_type = $3, attribution = NULLIF($4, ''), metadata = metadata || $5::jsonb
+         WHERE id = $1
+         RETURNING *`,
+        [existing.rows[0].id, sourceUrl, licenseType, attribution, JSON.stringify(uploadMetadata)],
+      )
+      imageCandidateCache.invalidate()
+      response.status(200).json({ image: await serializeImage(refreshed.rows[0]), deduplicated: true })
       return
     }
 
@@ -1074,15 +1207,11 @@ app.post('/api/images', requireUploadToken, upload.single('image'), async (reque
           (dish_id, sha256, object_key, thumbnail_key, width, height, mime_type, size_bytes, source_url, license_type, attribution, metadata)
          VALUES ($1, $2, $3, $4, $5, $6, 'image/webp', $7, NULLIF($8, ''), $9, NULLIF($10, ''), $11)
          RETURNING *`,
-        [dishId, sha256, objectKey, thumbnailKey, normalizedImage.info.width, normalizedImage.info.height, normalizedImage.data.length, sourceUrl, licenseType, attribution, JSON.stringify({
-          originalFileName: String(originalFileName || request.file.originalname).replace(/[\\/]/g, '').slice(0, 255),
-          collection: String(collection).replace(/[^a-z0-9_-]/gi, '').slice(0, 80),
-          originalMimeType: request.file.mimetype,
-          originalSizeBytes: request.file.size,
-        })],
+        [dishId, sha256, objectKey, thumbnailKey, normalizedImage.info.width, normalizedImage.info.height, normalizedImage.data.length, sourceUrl, licenseType, attribution, JSON.stringify(uploadMetadata)],
       )
       return result.rows[0]
     })
+    imageCandidateCache.invalidate()
     response.status(201).json({ image: await serializeImage(insertedRow), deduplicated: false })
   } catch (error) {
     next(error)
@@ -1104,6 +1233,7 @@ app.delete('/api/images/:id', requireUploadToken, async (request, response, next
       response.status(404).json({ error: 'image_not_found' })
       return
     }
+    imageCandidateCache.invalidate()
     response.status(204).end()
   } catch (error) {
     next(error)

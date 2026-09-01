@@ -27,8 +27,11 @@ from reportlab.platypus import (
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = ROOT / "output" / "pdf"
 PUBLIC_DIR = ROOT / "public" / "docs"
+WEBSITE_PUBLIC_DIR = ROOT / "website" / "public" / "docs"
 USER_GUIDE_NAME = "hao-chi-de-jin-tian-user-guide.pdf"
+README_PDF_NAME = "README.pdf"
 SHORTCUT_GUIDE_NAME = "hao-chi-de-jin-tian-keyboard-shortcuts.pdf"
+OFFICIAL_SITE_URL = "https://hao-chi-de-jin-tian.steven108yhq.chatgpt.site"
 
 INK = colors.HexColor("#3F382F")
 MUTED = colors.HexColor("#82796F")
@@ -288,42 +291,51 @@ def build_user_guide(path: Path, styles) -> None:
         Paragraph("好吃的今天<br/>使用说明", styles["cover_title"]),
         Paragraph("从今天吃什么，到一周怎么吃<br/>一份轻松、温暖、可持续记录的餐桌指南", styles["cover_subtitle"]),
         Spacer(1, 22 * mm),
-        note("这份 PDF 面向应用用户，内容包括快速上手、主要功能、小饭 AI、数据安全和常见问题。快捷键请查看设置中的独立《快捷键说明 PDF》。", styles),
+        note("本说明已按 2026-08-25 当前开发版更新，涵盖 5,000 道菜品库、同类示意图、多食材比例拟合、小饭 AI、数据边界和常见问题。快捷键请查看设置中的独立《快捷键说明 PDF》。", styles),
         Spacer(1, 13 * mm),
         cards([
-            ("适用平台", "Windows 桌面应用。网页预览仅用于体验界面，部分系统能力以桌面版为准。"),
+            ("适用平台", "Windows 10 / 11 64 位桌面应用。部分账号、图片、收藏与 AI 能力需要联网。"),
             ("产品定位", "帮助个人与家庭安排三餐、查询菜品、记录份量，并获得饮食参考建议。"),
         ], styles),
+        Spacer(1, 9 * mm),
+        Paragraph(f'产品官网：<link href="{OFFICIAL_SITE_URL}" color="#B94D2C">{OFFICIAL_SITE_URL}</link>', styles["small"]),
         PageBreak(),
         section_title("01  快速上手", styles),
         cards([
             ("1. 选择场景", "从日常、家庭、乐龄或健身模式开始。进阶场景需要登录并开通有效的 Pro 会员。"),
             ("2. 安排三餐", "在“好吃的今天”查看早餐、午餐和晚餐，点击菜品可调整时间、用量和营养信息。"),
-            ("3. 搜索菜品", "按 Ctrl + K 或点击顶部搜索框，在八大菜系库中按菜名、食材、口味和做法查找。"),
-            ("4. 问问小饭", "点击右下角“问问小饭”，描述想吃什么、现有食材或饮食目标，获取餐食建议。"),
+            ("3. 搜索菜品", "按 Ctrl + K 或点击顶部搜索框，在中华菜品库中按菜名、食材、口味、地区和做法查找。"),
+            ("4. 调整配方", "选择一种或多种已有食材并输入克数，自动反推未填写食材和营养；冲突输入会显示拟合偏差。"),
+            ("5. 加入餐单", "确认当前配比后加入早餐、午餐或晚餐；也可导出单道食谱 PDF。"),
+            ("6. 问问小饭", "点击右下角“问问小饭”，描述想吃什么、现有食材或饮食目标，获取餐食建议。"),
         ], styles),
         Paragraph("界面怎么走", styles["h2"]),
         Paragraph("左侧导航负责页面和场景切换；顶部提供后退、前进、搜索、通知和账号入口；中间是当前功能区；右下角是小饭 AI。后退与前进会记录你访问过的页面和场景。", styles["body"]),
-        note("第一次使用建议依次打开“好吃的今天 - 八大菜系库 - 餐食日历 - 营养报告”，再回到首页完成一顿饭的编辑。", styles),
+        note("第一次使用建议依次打开“好吃的今天 - 中华菜品库 - 餐食日历 - 营养报告”，再到“设置与帮助”查看官网和完整说明。", styles),
         PageBreak(),
         section_title("02  主要功能", styles),
         cards([
             ("今日三餐", "查看计划、编辑菜品和实际饭量、标记完成，并把记录用于后续份量建议。"),
             ("餐食日历", "按月浏览餐食，选择日期查看三餐；右键可快速打开当天详情。"),
-            ("八大菜系库", "检索菜品并查看食材、营养、推荐份量以及关联菜品，可直接加入早餐、午餐或晚餐。"),
-            ("收藏与报告", "把喜欢的菜加入收藏夹；在营养报告中查看阶段性表现和饮食结构提示。"),
+            ("中华菜品库", "服务端目录可提供 5,000 道已发布菜品、地区/类型筛选、服务端分页和精选关联菜。后台不可用时保留小型离线基础库。"),
+            ("可信图片提示", "专属图片优先；缺图时只在主料、形态和做法相容时复用“同类示意图”，并明确标注来源，无法安全匹配则保持无图。"),
+            ("智能份量换算", "历史饭量与热量目标形成初始建议；单食材按比例换算，多食材使用可解释的相对加权最小二乘拟合。"),
+            ("收藏与报告", "把喜欢的菜加入收藏夹；在营养报告中查看阶段性表现和饮食结构提示。联网收藏不可用时可本地降级。"),
             ("四种场景", "日常模式关注均衡，家庭餐桌关注多人份量，乐龄养护强调清淡与风险提示，燃力健身关注训练与营养搭配。"),
             ("PDF 导出", "单道食谱和每周菜单可通过 Windows 保存窗口导出为 PDF，便于打印、分享或留存。"),
         ], styles),
         Paragraph("份量建议如何产生", styles["h2"]),
-        Paragraph("应用会参考同一餐次的历史饭量与单餐热量目标，计算建议份量和食材克数。它用于生活规划，不是医学诊断，也不替代营养师或医生。", styles["body"]),
+        Paragraph("应用先参考同一餐次的历史饭量与单餐热量目标，计算初始份量。只输入一种食材时，其余用量按原配方同比例变化；输入两种以上时，系统保留用户填写值，用最小二乘估计整体配方系数，并显示输入一致性和平均偏差。未填写食材与营养按该系数估算。", styles["body"]),
+        note("多食材输入并不保证厨艺上的绝对准确。盐、油、水和香料在大批量制作时常需按口味、锅具和烹饪损耗微调；营养标为“估算”的菜品不能作为医疗或精确计量依据。", styles),
         PageBreak(),
-        section_title("03  小饭 AI 与隐私", styles),
+        section_title("03  联网能力、小饭 AI 与隐私", styles),
         Paragraph("小饭 AI 是应用内统一的饮食顾问名称。用户端不会展示、保存或读取后台服务凭证，也不会显示底层供应商或模型名称。服务会结合当前场景、今天的餐食和近期饭量记录生成回答。", styles["body"]),
         cards([
             ("适合询问", "今晚吃什么、冰箱剩菜怎么搭配、家庭人数变化、清淡或高蛋白替换、近期饮食结构。"),
             ("不适合询问", "疾病诊断、处方调整、急救判断、药物剂量，以及与饮食无关的通用问答。"),
-            ("数据保存", "餐食历史和日历调整优先保存在当前设备；登录、收藏等联网能力由后台服务处理。"),
+            ("离线可用", "小型菜品基础库、部分内置图片、餐食历史和日历调整可在当前设备继续使用。"),
+            ("联网能力", "5,000 道完整目录、在线图片、登录、云端收藏、小饭 AI 和会员服务需要后台连接。"),
+            ("数据保存", "餐食历史和日历调整优先保存在当前设备；账号、收藏、订单等联网能力由后台服务处理。"),
             ("敏感信息", "不要在对话中输入身份证号、银行卡、详细病历或其他与餐食建议无关的隐私信息。"),
         ], styles),
         note("如出现持续连接失败，请先检查网络，再到“设置 - 小饭 AI”运行连接检测。现有菜单和本地记录不会因 AI 暂时不可用而消失。", styles),
@@ -333,11 +345,14 @@ def build_user_guide(path: Path, styles) -> None:
         section_title("04  常见问题", styles),
         cards([
             ("找不到想吃的菜", "尝试搜索主要食材、菜系、口味或做法；也可以让小饭 AI 给出相近替代。"),
+            ("菜品图片不是本菜", "标有“同类示意图”表示使用了形态和主料相近的参考图；来源菜名会同时显示。"),
+            ("多种食材比例冲突", "查看输入一致性和平均偏差。偏差较高时请核对克数，或只保留更可靠的主料作为已知输入。"),
+            ("为什么只有约 200 道离线菜", "完整 5,000 道目录采用服务端分页；离线库保持精简，避免把大量目录、图片和关系打进安装包。"),
             ("页面切错了", "点击左上角返回按钮，或按 Alt + 左方向键。需要回来时点击前进按钮。"),
             ("文字太小", "按 Ctrl + 加号放大，Ctrl + 减号缩小，Ctrl + 0 恢复默认比例。"),
             ("PDF 没有打开", "确认系统已安装 PDF 阅读器；若仍失败，请重新安装最新版应用，确保帮助文档资源完整。"),
             ("AI 连接异常", "前往设置中的小饭 AI 页面运行检测；若持续失败，请联系管理员检查后台通道。"),
-            ("如何看全部快捷键", "进入“设置与帮助 - 快捷键说明”，或随时按 Ctrl + / 打开独立 PDF。"),
+            ("官网和最新状态", f"在“设置与帮助 - 帮助中心”打开产品官网，或访问 {OFFICIAL_SITE_URL}。下载页会区分当前安装包与仍待重新打包的开发版能力。"),
         ], styles),
         Spacer(1, 7 * mm),
         note("健康提示：小饭 AI 和营养数据仅作日常饮食参考。涉及疾病、过敏、孕产、儿童喂养或用药时，请咨询具备资质的专业人员。", styles, colors.HexColor("#EDF7F1")),
@@ -353,7 +368,7 @@ def build_shortcut_guide(path: Path, styles) -> None:
         ("Alt + 右方向键", "前往下一界面", "返回后可沿历史记录向前移动。"),
         ("Ctrl + 1", "今日三餐", "直接打开“好吃的今天”。"),
         ("Ctrl + 2", "餐食日历", "直接打开餐食日历。"),
-        ("Ctrl + 3", "菜系库", "直接打开八大菜系库。"),
+        ("Ctrl + 3", "中华菜品库", "直接打开中华菜品库。"),
         ("Ctrl + 4", "营养报告", "直接打开营养报告。"),
         ("Ctrl + 5", "我的收藏", "直接打开收藏页面。"),
         ("Alt + 1", "日常模式", "切换到日常模式并返回今日页面。"),
@@ -362,7 +377,7 @@ def build_shortcut_guide(path: Path, styles) -> None:
         ("Alt + 4", "燃力健身", "切换到健身模式；未解锁时会显示会员流程。"),
     ]
     productivity = [
-        ("Ctrl + K", "搜索菜品", "打开八大菜系库并把光标放到搜索区域。"),
+        ("Ctrl + K", "搜索菜品", "打开中华菜品库并把光标放到搜索区域。"),
         ("Ctrl + Shift + A", "打开或关闭小饭 AI", "快速呼出饮食顾问；再次按下可收起。"),
         ("Ctrl + ,", "打开设置", "打开“设置与帮助”的账号信息页面。"),
         ("Ctrl + /", "快捷键说明", "直接打开当前这份快捷键 PDF。"),
@@ -410,15 +425,21 @@ def main() -> None:
     styles = make_styles()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
+    WEBSITE_PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
     user_guide = OUTPUT_DIR / USER_GUIDE_NAME
+    readme_pdf = OUTPUT_DIR / README_PDF_NAME
     shortcut_guide = OUTPUT_DIR / SHORTCUT_GUIDE_NAME
     build_user_guide(user_guide, styles)
     build_shortcut_guide(shortcut_guide, styles)
 
     shutil.copy2(user_guide, PUBLIC_DIR / USER_GUIDE_NAME)
+    shutil.copy2(user_guide, readme_pdf)
+    shutil.copy2(user_guide, PUBLIC_DIR / README_PDF_NAME)
+    shutil.copy2(user_guide, WEBSITE_PUBLIC_DIR / README_PDF_NAME)
     shutil.copy2(shortcut_guide, PUBLIC_DIR / SHORTCUT_GUIDE_NAME)
     print(user_guide)
+    print(readme_pdf)
     print(shortcut_guide)
 
 

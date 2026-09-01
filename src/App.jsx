@@ -1,5 +1,4 @@
 import { Component, useEffect, useMemo, useRef, useState } from 'react'
-import QRCode from 'qrcode'
 import {
   Activity,
   Apple,
@@ -16,6 +15,7 @@ import {
   Dumbbell,
   FileDown,
   Flame,
+  Globe2,
   Heart,
   Keyboard,
   Leaf,
@@ -48,8 +48,9 @@ import familyDinnerImage from './assets/lifestyle/family-dinner.webp'
 import fitnessTrainingImage from './assets/lifestyle/fitness-training.webp'
 import { ElderProfileModal, FamilyProfileModal } from './components/DietaryProfileEditors'
 import { FitnessPlanModal, FitnessTrainingPlanner } from './components/FitnessTrainingPlanner'
+import { DishLibraryView } from './components/DishLibraryView'
 import { ModalShell } from './components/ModalShell'
-import { managedAiDefaults, quickQuestions, relationNodeLayout } from './data/appContent'
+import { managedAiDefaults, quickQuestions } from './data/appContent'
 import {
   buildElderProfileContext,
   buildFamilyProfileContext,
@@ -61,13 +62,12 @@ import {
   normalizeElderProfile,
   normalizeFamilyProfile,
 } from './data/dietaryProfiles'
-import { cuisineMeta, dishes } from './data/dishLibrary'
+import { dishes } from './data/dishLibrary'
 import { demoMealHistory, initialMeals, weekPlan } from './data/mealPlan'
 import { buildFitnessTrainingContext, createDefaultFitnessTrainingPlan, normalizeFitnessTrainingPlan, resolveFitnessTraining } from './data/trainingPlan'
 import { useFavoriteCatalog } from './hooks/useFavoriteCatalog'
 import { usePreloadedImages } from './hooks/usePreloadedImages'
-import { analyzeDishQuery, calculateDishPortion, getDishGraphStats, getRelatedDishes, searchDishes } from './services/dishEngine'
-import { listCatalogDishes, readCatalogFacets, readCatalogRelations } from './services/catalogApi'
+import { calculateDishPortion } from './services/dishEngine'
 import { loginAccount, logoutAccount, readCurrentAuthSession, registerAccount, sendVerificationCode, startSocialLogin } from './services/authApi'
 import {
   completeDevelopmentOrder,
@@ -79,13 +79,14 @@ import {
   reconcileBillingOrder,
 } from './services/billingApi'
 import { readDemoAccount } from './services/session'
-import { fetchDishImages } from './services/imageApi'
-import { exportRecipeToPdf, exportWeeklyPlanToPdf } from './services/pdfExport'
+import { exportWeeklyPlanToPdf } from './services/pdfExport'
 import { readJsonStorage, STORAGE_KEYS, writeJsonStorage } from './services/browserStorage'
 import { buildMonthCells, calendarDateKey, dateFromCalendarKey, mealsForCalendarDate, sameCalendarDate } from './services/mealPlanner'
 import { resolveKeyboardShortcut } from './services/keyboardShortcuts'
 import { createViewHistory, getCurrentView, moveViewHistory, pushView } from './services/viewHistory'
 import { getChinaToday } from './utils/chinaTime'
+
+const OFFICIAL_SITE_URL = 'https://hao-chi-de-jin-tian.steven108yhq.chatgpt.site'
 
 const modules = [
   {
@@ -434,9 +435,9 @@ function App() {
     }
   }
 
-  function addDishToMeal(dish, mealType = '午餐') {
+  function addDishToMeal(dish, mealType = '午餐', portionOverride = null) {
     if (!dish) return
-    const portion = calculateDishPortion(dish, mealHistory, mealType)
+    const portion = portionOverride?.ingredients?.length ? portionOverride : calculateDishPortion(dish, mealHistory, mealType)
     const ingredientText = portion.ingredients.map((item) => `${item.name} ${item.grams}g`).join(' · ')
     setMeals((current) => [...current, {
       type: mealType,
@@ -449,10 +450,15 @@ function App() {
       image: dish.image,
       done: false,
       dishId: dish.id,
-      portionMultiplier: portion.multiplier,
+      portionMultiplier: portion.adjustment?.baseMultiplier || portion.multiplier,
+      recipeScale: portion.adjustment?.scale || 1,
     }])
     navigatePage('today')
-    setToast(`${dish.name}已按你的历史饭量换算，加入${mealType}。`)
+    setToast(portion.adjustment
+      ? portion.adjustment.mode === 'regression'
+        ? `${dish.name}已根据 ${portion.adjustment.anchorCount} 种已知食材的拟合比例加入${mealType}。`
+        : `${dish.name}已按${portion.adjustment.ingredientName} ${portion.adjustment.targetGrams}g 的比例加入${mealType}。`
+      : `${dish.name}已按你的历史饭量换算，加入${mealType}。`)
   }
 
   function toggleMealDone(index) {
@@ -1148,277 +1154,6 @@ function FavoritesView({ onToast, onUseDish }) {
   )
 }
 
-function catalogPageNumbers(currentPage, totalPages) {
-  const visibleCount = Math.min(5, totalPages)
-  const start = Math.max(1, Math.min(currentPage - 2, totalPages - visibleCount + 1))
-  return Array.from({ length: visibleCount }, (_, index) => start + index)
-}
-
-function CatalogPagination({ page, totalPages, loading, placement, onPageChange }) {
-  const [jumpPage, setJumpPage] = useState(String(page))
-
-  useEffect(() => setJumpPage(String(page)), [page])
-
-  function moveTo(nextPage) {
-    const safePage = Math.max(1, Math.min(totalPages, Math.round(Number(nextPage) || 1)))
-    if (safePage !== page) onPageChange(safePage)
-  }
-
-  return (
-    <nav className={`catalog-pagination ${placement}`} aria-label={`菜品库${placement === 'top' ? '顶部' : '底部'}分页`}>
-      <div className="catalog-page-controls">
-        <button disabled={page <= 1 || loading} onClick={() => moveTo(1)}>首页</button>
-        <button disabled={page <= 1 || loading} onClick={() => moveTo(page - 1)} aria-label="上一页">‹</button>
-        <div className="catalog-page-numbers">
-          {catalogPageNumbers(page, totalPages).map((pageNumber) => (
-            <button
-              key={pageNumber}
-              className={pageNumber === page ? 'active' : ''}
-              aria-current={pageNumber === page ? 'page' : undefined}
-              aria-label={`第 ${pageNumber} 页`}
-              disabled={loading}
-              onClick={() => moveTo(pageNumber)}
-            >
-              {pageNumber}
-            </button>
-          ))}
-        </div>
-        <button disabled={page >= totalPages || loading} onClick={() => moveTo(page + 1)} aria-label="下一页">›</button>
-        <button disabled={page >= totalPages || loading} onClick={() => moveTo(totalPages)}>末页</button>
-      </div>
-      <form className="catalog-page-jump" onSubmit={(event) => { event.preventDefault(); moveTo(event.currentTarget.elements.namedItem('page')?.value) }}>
-        <span>第 {page} / {totalPages} 页</span>
-        <label><em>跳至</em><input name="page" type="number" min="1" max={totalPages} value={jumpPage} onChange={(event) => setJumpPage(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); moveTo(event.currentTarget.value) } }} aria-label="跳转页码" /><em>页</em></label>
-        <button type="submit" disabled={loading}>前往</button>
-      </form>
-    </nav>
-  )
-}
-
-function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
-  const [query, setQuery] = useState('')
-  const [cuisine, setCuisine] = useState('all')
-  const [region, setRegion] = useState('all')
-  const [dishType, setDishType] = useState('all')
-  const [catalogPage, setCatalogPage] = useState(1)
-  const [results, setResults] = useState(() => dishes.slice(0, 36))
-  const [pageInfo, setPageInfo] = useState({ page: 1, limit: 36, total: dishes.length, totalPages: Math.ceil(dishes.length / 36), hasNextPage: dishes.length > 36 })
-  const [facets, setFacets] = useState({ summary: { dishes: dishes.length, relations: getDishGraphStats().edges, sourceBacked: dishes.length }, cuisines: [], regions: [], dishTypes: [] })
-  const [catalogState, setCatalogState] = useState('loading')
-  const [relatedDishes, setRelatedDishes] = useState(() => getRelatedDishes(dishes[2]?.id, 6))
-  const [selectedDish, setSelectedDish] = useState(dishes[2])
-  const [mealType, setMealType] = useState('午餐')
-  const [remoteImages, setRemoteImages] = useState({})
-  const [isExportingPdf, setIsExportingPdf] = useState(false)
-  const { favoriteByDishId, activeCollection, toggleFavorite } = useFavoriteCatalog()
-  const searchInputRef = useRef(null)
-  const dishResultsRef = useRef(null)
-  const previousCatalogPageRef = useRef(1)
-  const searchAnalysis = useMemo(() => analyzeDishQuery(query), [query])
-  const portion = selectedDish ? calculateDishPortion(selectedDish, mealHistory, mealType) : null
-  const nutritionPending = selectedDish?.nutritionConfidence === 'unverified'
-  const availableCuisines = useMemo(() => {
-    const known = new Set(cuisineMeta.map((item) => item.id))
-    return [...cuisineMeta, ...facets.cuisines.filter((item) => !known.has(item.value)).map((item) => ({ id: item.value, name: item.value, emoji: '🍲' }))]
-  }, [facets.cuisines])
-  const imageUrls = useMemo(() => [...new Set(results.map((dish) => dishImage(dish)).filter(Boolean).concat(selectedDish ? [dishImage(selectedDish, false)] : []))], [results, remoteImages, selectedDish])
-  const imageReadyMap = usePreloadedImages(imageUrls)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    readCatalogFacets(controller.signal).then(setFacets).catch(() => {})
-    return () => controller.abort()
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const timer = window.setTimeout(() => {
-      setCatalogState('loading')
-      listCatalogDishes({ query, cuisine, region, dishType, page: catalogPage, limit: 36 }, controller.signal)
-        .then((payload) => {
-          setResults(payload.dishes || [])
-          setPageInfo(payload.pageInfo)
-          setCatalogState('online')
-        })
-        .catch((error) => {
-          if (error.name === 'AbortError') return
-          const fallback = searchDishes(query, cuisine)
-          const start = (catalogPage - 1) * 36
-          setResults(fallback.slice(start, start + 36))
-          setPageInfo({ page: catalogPage, limit: 36, total: fallback.length, totalPages: Math.max(1, Math.ceil(fallback.length / 36)), hasNextPage: start + 36 < fallback.length })
-          setCatalogState('offline')
-        })
-    }, query ? 220 : 0)
-    return () => { controller.abort(); window.clearTimeout(timer) }
-  }, [catalogPage, cuisine, dishType, query, region])
-
-  useEffect(() => {
-    const visibleIds = [...results.map((dish) => dish.id), selectedDish?.id].filter(Boolean)
-    let active = true
-    fetchDishImages(visibleIds)
-      .then((images) => { if (active) setRemoteImages((current) => ({ ...current, ...images })) })
-      .catch(() => {})
-    return () => { active = false }
-  }, [results, selectedDish?.id])
-
-  useEffect(() => {
-    if (!selectedDish) { setRelatedDishes([]); return undefined }
-    const controller = new AbortController()
-    readCatalogRelations(selectedDish.id, 6, controller.signal)
-      .then((payload) => setRelatedDishes(payload.relations || []))
-      .catch((error) => { if (error.name !== 'AbortError') setRelatedDishes(getRelatedDishes(selectedDish.id, 6)) })
-    return () => controller.abort()
-  }, [selectedDish?.id])
-
-  useEffect(() => {
-    if (!focusRequest) return undefined
-    const frame = window.requestAnimationFrame(() => {
-      searchInputRef.current?.focus()
-      searchInputRef.current?.select()
-    })
-    return () => window.cancelAnimationFrame(frame)
-  }, [focusRequest])
-
-  useEffect(() => {
-    if (!results.length || results.some((dish) => dish.id === selectedDish?.id)) return
-    setSelectedDish(results[0])
-  }, [results, selectedDish?.id])
-
-  useEffect(() => {
-    if (previousCatalogPageRef.current === catalogPage) return
-    previousCatalogPageRef.current = catalogPage
-    const frame = window.requestAnimationFrame(() => dishResultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-    return () => window.cancelAnimationFrame(frame)
-  }, [catalogPage])
-
-  function dishImage(dish, thumbnail = true) {
-    const remoteImage = remoteImages[dish.id]
-    return (thumbnail ? remoteImage?.thumbnailUrl : remoteImage?.url) || dish.image
-  }
-
-  async function exportSelectedRecipe() {
-    if (!selectedDish || !portion || isExportingPdf) return
-    setIsExportingPdf(true)
-    try {
-      const result = await exportRecipeToPdf(selectedDish, portion, mealType)
-      if (result?.ok) onToast(result.browserPrint ? '打印窗口已打开，选择“另存为 PDF”即可。' : `${selectedDish.name}食谱 PDF 已保存。`)
-    } catch (error) {
-      onToast(error instanceof Error ? error.message : '食谱 PDF 导出失败。')
-    } finally {
-      setIsExportingPdf(false)
-    }
-  }
-
-  async function handleToggleFavorite(dish, event) {
-    event?.preventDefault()
-    event?.stopPropagation()
-    try {
-      const result = await toggleFavorite({ ...dish, image: dishImage(dish, false) })
-      if (result.action === 'removed') {
-        onToast(`${dish.name}已从收藏里移出`)
-      } else {
-        onToast(`${dish.name}已收藏到${result.collection || activeCollection?.name || '默认收藏'}`)
-      }
-    } catch (error) {
-      onToast(error instanceof Error ? error.message : '收藏操作失败')
-    }
-  }
-
-  return (
-    <div className="page-view library-page">
-      <section className="page-intro library-intro"><div><span className="section-kicker">CHINESE DISH ATLAS</span><h2>中华菜品库，今天搜哪一味？</h2><p>覆盖传统菜、家常菜、主食小吃与可组合搭配；配方来源和营养可信度会如实标明。</p></div><div className="library-stats"><span><strong>{facets.summary.dishes.toLocaleString('zh-CN')}</strong><small>道可搜索菜</small></span><span><strong>{facets.summary.relations.toLocaleString('zh-CN')}</strong><small>条精选关系</small></span><span><strong>{(facets.summary.sourceBacked || 0).toLocaleString('zh-CN')}</strong><small>条有来源配方</small></span></div></section>
-      <div className="library-searchbar"><Search size={18} /><input ref={searchInputRef} value={query} onChange={(event) => { setQuery(event.target.value); setCatalogPage(1) }} onKeyDown={(event) => { if (event.key === 'Escape') { setQuery(''); setCatalogPage(1); event.currentTarget.blur() } }} placeholder="搜菜名、食材、口味、做法：如 番茄 / 猪肉饺 / 清蒸…" aria-label="搜索菜名、食材、口味或烹饪方式" /><kbd>Ctrl K</kbd></div>
-      {!searchAnalysis.isEmpty && (
-        <div className="library-search-insight">
-          <span>已智能提取</span>
-          {searchAnalysis.displayTokens.length
-            ? searchAnalysis.displayTokens.map((token) => <em key={token}>{token}</em>)
-            : <em>近似菜名</em>}
-          <small>按菜名、食材、做法、口味、拼音/缩写综合排序</small>
-        </div>
-      )}
-      <div className="library-filter-row">
-        <div className="cuisine-chips">{availableCuisines.map((item) => <button key={item.id} className={cuisine === item.id ? 'active' : ''} onClick={() => { setCuisine(item.id); setCatalogPage(1) }}><span>{item.emoji}</span>{item.name}</button>)}</div>
-        <select value={region} onChange={(event) => { setRegion(event.target.value); setCatalogPage(1) }} aria-label="按地区筛选"><option value="all">全部地区</option>{facets.regions.map((item) => <option key={item.value} value={item.value}>{item.value} · {item.count}</option>)}</select>
-        <select value={dishType} onChange={(event) => { setDishType(event.target.value); setCatalogPage(1) }} aria-label="按类型筛选"><option value="all">全部类型</option>{facets.dishTypes.map((item) => <option key={item.value} value={item.value}>{item.value} · {item.count}</option>)}</select>
-      </div>
-      <div className="library-layout">
-        <section className="dish-results">
-          <div className="library-result-head" ref={dishResultsRef}><span>找到 {pageInfo.total.toLocaleString('zh-CN')} 道好菜 <i className={`catalog-state ${catalogState}`}>{catalogState === 'online' ? '服务端目录' : catalogState === 'offline' ? '离线基础库' : '正在检索'}</i></span><button onClick={() => { setQuery(''); setCuisine('all'); setRegion('all'); setDishType('all'); setCatalogPage(1) }}>清空筛选</button></div>
-          {pageInfo.totalPages > 1 && <CatalogPagination page={catalogPage} totalPages={pageInfo.totalPages} loading={catalogState === 'loading'} placement="top" onPageChange={setCatalogPage} />}
-          <div className="dish-card-grid">
-            {results.map((dish) => {
-              const imageUrl = dishImage(dish)
-              const imageReady = !imageUrl || Boolean(imageReadyMap[imageUrl])
-              const isFavorited = favoriteByDishId.has(dish.id)
-              return (
-                <article
-                  key={dish.id}
-                  className={`dish-card ${selectedDish?.id === dish.id ? 'selected' : ''} ${isFavorited ? 'is-favorited' : ''}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSelectedDish(dish)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      setSelectedDish(dish)
-                    }
-                  }}
-                >
-                  <div
-                    className={`dish-card-image ${imageReady ? 'is-ready' : 'is-loading'}`}
-                    style={imageReady && imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
-                  >
-                    {!imageReady && <span className="image-skeleton-mark" />}
-                    {!imageUrl && <b className="dish-image-fallback">{dish.dishType === '主食' ? '🍜' : dish.dishType === '饮品' ? '🫖' : '🥘'}</b>}
-                    <span>{dish.cuisine}</span>
-                    <i>{remoteImages[dish.id] ? '☁ 云端' : dish.method}</i>
-                    <button
-                      className={`dish-favorite-button ${isFavorited ? 'active' : ''}`}
-                      onClick={(event) => handleToggleFavorite(dish, event)}
-                      title={isFavorited ? '从收藏中移出' : `收藏到${activeCollection?.name || '默认收藏'}`}
-                      aria-label={isFavorited ? `取消收藏：${dish.name}` : `收藏：${dish.name}`}
-                    >
-                      <Heart size={15} fill={isFavorited ? 'currentColor' : 'none'} />
-                    </button>
-                  </div>
-                  <div className="dish-card-copy">
-                    <strong>{dish.name}</strong>
-                    <small>{dish.nutritionConfidence === 'unverified' ? '营养待核验' : `${dish.nutrition.calories || 0} kcal · ${dish.nutritionConfidence === 'estimated' ? '营养估算' : `蛋白 ${dish.nutrition.protein || 0}g`}`}</small>
-                    <div>{(dish.tags || ['新收录']).slice(0, 2).map((tag) => <em key={tag}>{tag}</em>)}</div>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-          {pageInfo.totalPages > 1 && <CatalogPagination page={catalogPage} totalPages={pageInfo.totalPages} loading={catalogState === 'loading'} placement="bottom" onPageChange={setCatalogPage} />}
-          {!results.length && <div className="empty-library"><span>🍜</span><strong>这道菜还在后厨备菜</strong><small>换个关键词，或者等爬虫把它带回来。</small></div>}
-        </section>
-        {selectedDish && portion && <aside className="dish-detail panel-card">
-          <div
-            className={`dish-detail-image ${!dishImage(selectedDish, false) || imageReadyMap[dishImage(selectedDish, false)] ? 'is-ready' : 'is-loading'}`}
-            style={imageReadyMap[dishImage(selectedDish, false)] ? { backgroundImage: `url(${dishImage(selectedDish, false)})` } : undefined}
-          >
-            {dishImage(selectedDish, false) && !imageReadyMap[dishImage(selectedDish, false)] && <span className="image-skeleton-mark" />}
-            {!dishImage(selectedDish, false) && <b className="dish-detail-fallback">🥘</b>}
-            <span>{selectedDish.cuisine} · {selectedDish.method}{remoteImages[selectedDish.id] ? ' · MinIO' : ''}</span>
-            <button
-              className={`favorite-pin ${favoriteByDishId.has(selectedDish.id) ? 'active' : ''}`}
-              onClick={(event) => handleToggleFavorite(selectedDish, event)}
-              title={favoriteByDishId.has(selectedDish.id) ? '从收藏中移出' : `收藏到${activeCollection?.name || '默认收藏'}`}
-            >
-              <Heart size={15} fill={favoriteByDishId.has(selectedDish.id) ? 'currentColor' : 'none'} />
-            </button>
-            <button onClick={() => setSelectedDish(null)}><X size={16} /></button>
-          </div>
-          <div className="dish-detail-copy"><span className="section-kicker">PORTION ENGINE</span><h3>{selectedDish.name}</h3><p>这份菜是 <strong>{(selectedDish.taste || ['经典']).join('、')}</strong> 风味，系统会按你过去的饭量动态换算。</p><div className={`dish-evidence ${selectedDish.reviewStatus || 'candidate'}`}>{selectedDish.reviewStatus === 'generated' ? '家常搭配 · 组合规则生成' : selectedDish.source === 'howtocook' ? '开源配方 · 来源可追溯' : selectedDish.reviewStatus === 'candidate' || !selectedDish.reviewStatus ? '候选配方 · 待人工复核' : '项目配方 · 已审阅'}<small>{nutritionPending ? '营养数据待核验' : selectedDish.nutritionConfidence === 'verified' || selectedDish.nutritionConfidence === 'source_estimate' ? '营养数据来自可信来源' : '营养数据为估算值'}</small>{selectedDish.sourceUrl && <a href={selectedDish.sourceUrl} target="_blank" rel="noreferrer">查看配方来源 ↗</a>}</div><div className="meal-type-switch">{['早餐', '午餐', '晚餐'].map((type) => <button className={mealType === type ? 'active' : ''} key={type} onClick={() => setMealType(type)}>{type}</button>)}</div><div className="portion-highlight"><span>建议系数<strong>{portion.multiplier}×</strong></span><span>单人热量<strong>{nutritionPending ? '待核验' : portion.nutrition.calories}{!nutritionPending && <small> kcal</small>}</strong></span><span>蛋白质<strong>{nutritionPending ? '待核验' : portion.nutrition.protein}{!nutritionPending && <small> g</small>}</strong></span></div><div className="ingredient-list"><strong>这顿要准备</strong>{portion.ingredients.slice(0, 5).map((ingredient) => <span key={ingredient.name}><em>{ingredient.name}</em><b>{ingredient.grams}g</b></span>)}</div><small className="portion-reason"><Sparkles size={13} /> {portion.reason}</small><div className="dish-detail-actions"><button className="primary-full" onClick={() => onUseDish({ ...selectedDish, image: dishImage(selectedDish, false) }, mealType)}>按我的饭量加入{mealType} <Plus size={16} /></button><button className="outline-full" onClick={exportSelectedRecipe} disabled={isExportingPdf}><FileDown size={15} /> {isExportingPdf ? '正在生成 PDF…' : '导出这份食谱 PDF'}</button></div></div>
-          <div className="relation-map"><div className="relation-map-head"><strong>这道菜和谁有关系？</strong><small>食材 · 做法 · 风味 · 菜系</small></div><div className="relation-canvas"><svg className="relation-lines" viewBox="0 0 320 210" preserveAspectRatio="none" aria-hidden="true">{relatedDishes.map((relatedDish, index) => { const point = relationNodeLayout[index]; return <g key={relatedDish.id}><line x1="160" y1="105" x2={point.x} y2={point.y} /><circle cx={point.x} cy={point.y} r="3" /><text x={(160 + point.x) / 2} y={(105 + point.y) / 2 - 4}>{relatedDish.relationScore}</text></g> })}</svg><span className="relation-center">{selectedDish.name}</span>{relatedDishes.map((relatedDish, index) => { const point = relationNodeLayout[index]; return <button key={relatedDish.id} className="relation-node" style={{ left: `${point.x / 3.2}%`, top: `${point.y / 2.1}%` }} onClick={() => setSelectedDish(relatedDish)} title={`关系强度 ${relatedDish.relationScore}`}><i>{relatedDish.name}</i><small>{relatedDish.relationReason}</small></button> })}{!relatedDishes.length && <small className="relation-empty">暂时没有达到阈值的关系</small>}</div></div>
-        </aside>}
-      </div>
-    </div>
-  )
-}
-
 class AssistantErrorBoundary extends Component {
   constructor(props) {
     super(props)
@@ -1665,7 +1400,8 @@ function MembershipModal({ account, onClose, onActivate, onRequireLogin, onToast
       setQrDataUrl('')
       return () => { active = false }
     }
-    QRCode.toDataURL(order.qrPayload, { width: 240, margin: 1, color: { dark: '#292620', light: '#ffffff' } })
+    import('qrcode')
+      .then(({ default: QRCode }) => QRCode.toDataURL(order.qrPayload, { width: 240, margin: 1, color: { dark: '#292620', light: '#ffffff' } }))
       .then((url) => { if (active) setQrDataUrl(url) })
       .catch(() => { if (active) setError('付款码生成失败，请重新下单。') })
     return () => { active = false }
@@ -1946,7 +1682,7 @@ function SettingsModal({ account: activeAccount, initialSection = 'account', mem
           </div>
         )}
         {section === 'shortcuts' && <div className="settings-section help-section"><span className="settings-kicker">KEYBOARD SHORTCUTS</span><h3>键盘快一点，开饭早一点</h3><p>导航、搜索、小饭 AI、场景切换和窗口操作已经整理成独立 PDF，阅读时不会显示代码内容。</p><button className="readme-button" onClick={() => onOpenDocument('keyboard-shortcuts')}><span><Keyboard size={20} /></span><div><strong>打开快捷键说明 PDF</strong><small>导航操作 · 效率工具 · 窗口控制</small></div><ArrowRight size={17} /></button><div className="help-note"><Keyboard size={16} /><span>随时按 Ctrl + / 可以直接打开这份快捷键说明。</span></div></div>}
-        {section === 'help' && <div className="settings-section help-section"><span className="settings-kicker">HELP CENTER</span><h3>有问题，别饿着</h3><p>README 已整理为适合阅读的使用说明 PDF，包含主要功能、使用流程、数据安全和常见问题，不再以源码或 Markdown 形式展示。</p><button className="readme-button" onClick={() => onOpenDocument('user-guide')}><span><BookOpen size={20} /></span><div><strong>打开 README 使用说明 PDF</strong><small>快速上手 · 功能说明 · 常见问题</small></div><ArrowRight size={17} /></button><div className="help-note"><ShieldCheck size={16} /><span>营养建议只作生活参考，疾病治疗请咨询专业医生。</span></div></div>}
+        {section === 'help' && <div className="settings-section help-section"><span className="settings-kicker">HELP CENTER</span><h3>有问题，别饿着</h3><p>README 使用说明和产品官网会同步记录当前能力、使用流程、数据边界与版本状态。</p><button className="readme-button" onClick={() => onOpenDocument('user-guide')}><span><BookOpen size={20} /></span><div><strong>打开 README 使用说明 PDF</strong><small>快速上手 · 功能说明 · 常见问题</small></div><ArrowRight size={17} /></button><a className="readme-button official-site-button" href={OFFICIAL_SITE_URL} target="_blank" rel="noreferrer"><span><Globe2 size={20} /></span><div><strong>访问“好吃的今天”官网</strong><small>产品进展 · 版本说明 · Windows 下载</small></div><ArrowRight size={17} /></a><div className="help-note"><ShieldCheck size={16} /><span>营养建议只作生活参考，疾病治疗请咨询专业医生。</span></div></div>}
       </section></div>
     </ModalShell>
   )
