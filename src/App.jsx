@@ -1,5 +1,4 @@
 import { Component, useEffect, useMemo, useRef, useState } from 'react'
-import QRCode from 'qrcode'
 import {
   Activity,
   Apple,
@@ -16,6 +15,7 @@ import {
   Dumbbell,
   FileDown,
   Flame,
+  Globe2,
   Heart,
   Keyboard,
   Leaf,
@@ -48,8 +48,9 @@ import familyDinnerImage from './assets/lifestyle/family-dinner.webp'
 import fitnessTrainingImage from './assets/lifestyle/fitness-training.webp'
 import { ElderProfileModal, FamilyProfileModal } from './components/DietaryProfileEditors'
 import { FitnessPlanModal, FitnessTrainingPlanner } from './components/FitnessTrainingPlanner'
+import { DishLibraryView } from './components/DishLibraryView'
 import { ModalShell } from './components/ModalShell'
-import { managedAiDefaults, quickQuestions, relationNodeLayout } from './data/appContent'
+import { managedAiDefaults, quickQuestions } from './data/appContent'
 import {
   buildElderProfileContext,
   buildFamilyProfileContext,
@@ -61,22 +62,31 @@ import {
   normalizeElderProfile,
   normalizeFamilyProfile,
 } from './data/dietaryProfiles'
-import { cuisineMeta, dishes } from './data/dishLibrary'
+import { dishes } from './data/dishLibrary'
 import { demoMealHistory, initialMeals, weekPlan } from './data/mealPlan'
 import { buildFitnessTrainingContext, createDefaultFitnessTrainingPlan, normalizeFitnessTrainingPlan, resolveFitnessTraining } from './data/trainingPlan'
 import { useFavoriteCatalog } from './hooks/useFavoriteCatalog'
 import { usePreloadedImages } from './hooks/usePreloadedImages'
-import { analyzeDishQuery, calculateDishPortion, getDishGraphStats, getRelatedDishes, searchDishes } from './services/dishEngine'
+import { calculateDishPortion } from './services/dishEngine'
 import { loginAccount, logoutAccount, readCurrentAuthSession, registerAccount, sendVerificationCode, startSocialLogin } from './services/authApi'
-import { completeDevelopmentOrder, createBillingOrder, listBillingProducts, readBillingOrder, readMembership } from './services/billingApi'
+import {
+  completeDevelopmentOrder,
+  createBillingOrder,
+  listBillingOrders,
+  listBillingProducts,
+  readBillingOrder,
+  readMembership,
+  reconcileBillingOrder,
+} from './services/billingApi'
 import { readDemoAccount } from './services/session'
-import { fetchDishImages } from './services/imageApi'
-import { exportRecipeToPdf, exportWeeklyPlanToPdf } from './services/pdfExport'
+import { exportWeeklyPlanToPdf } from './services/pdfExport'
 import { readJsonStorage, STORAGE_KEYS, writeJsonStorage } from './services/browserStorage'
 import { buildMonthCells, calendarDateKey, dateFromCalendarKey, mealsForCalendarDate, sameCalendarDate } from './services/mealPlanner'
 import { resolveKeyboardShortcut } from './services/keyboardShortcuts'
 import { createViewHistory, getCurrentView, moveViewHistory, pushView } from './services/viewHistory'
 import { getChinaToday } from './utils/chinaTime'
+
+const OFFICIAL_SITE_URL = 'https://hao-chi-de-jin-tian.steven108yhq.chatgpt.site'
 
 const modules = [
   {
@@ -147,6 +157,7 @@ function App() {
   const [toast, setToast] = useState('')
   const [account, setAccount] = useState(() => readDemoAccount())
   const tabNavigationRef = useRef(false)
+  const membershipReminderRef = useRef('')
   const [mealHistory, setMealHistory] = useState(() => {
     const savedHistory = readJsonStorage(STORAGE_KEYS.mealHistory, demoMealHistory, Array.isArray)
     return savedHistory.length ? savedHistory : demoMealHistory
@@ -292,6 +303,14 @@ function App() {
   }, [account?.id])
 
   useEffect(() => {
+    if (!membership?.isPro || !membership.reminder?.message) return
+    const reminderKey = `${membership.validUntil}:${membership.reminder.daysRemaining}`
+    if (membershipReminderRef.current === reminderKey) return
+    membershipReminderRef.current = reminderKey
+    setToast(`${membership.reminder.message} 可在设置中的会员信息查看续费记录。`)
+  }, [membership])
+
+  useEffect(() => {
     writeJsonStorage(STORAGE_KEYS.mealHistory, mealHistory.slice(-180))
   }, [mealHistory])
 
@@ -416,9 +435,9 @@ function App() {
     }
   }
 
-  function addDishToMeal(dish, mealType = '午餐') {
+  function addDishToMeal(dish, mealType = '午餐', portionOverride = null) {
     if (!dish) return
-    const portion = calculateDishPortion(dish, mealHistory, mealType)
+    const portion = portionOverride?.ingredients?.length ? portionOverride : calculateDishPortion(dish, mealHistory, mealType)
     const ingredientText = portion.ingredients.map((item) => `${item.name} ${item.grams}g`).join(' · ')
     setMeals((current) => [...current, {
       type: mealType,
@@ -431,10 +450,15 @@ function App() {
       image: dish.image,
       done: false,
       dishId: dish.id,
-      portionMultiplier: portion.multiplier,
+      portionMultiplier: portion.adjustment?.baseMultiplier || portion.multiplier,
+      recipeScale: portion.adjustment?.scale || 1,
     }])
     navigatePage('today')
-    setToast(`${dish.name}已按你的历史饭量换算，加入${mealType}。`)
+    setToast(portion.adjustment
+      ? portion.adjustment.mode === 'regression'
+        ? `${dish.name}已根据 ${portion.adjustment.anchorCount} 种已知食材的拟合比例加入${mealType}。`
+        : `${dish.name}已按${portion.adjustment.ingredientName} ${portion.adjustment.targetGrams}g 的比例加入${mealType}。`
+      : `${dish.name}已按你的历史饭量换算，加入${mealType}。`)
   }
 
   function toggleMealDone(index) {
@@ -574,7 +598,7 @@ function App() {
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onToast={setToast} onAuthenticated={handleAuthenticated} />}
       {showShare && <ShareModal onClose={() => setShowShare(false)} onToast={setToast} />}
-      {showSettings && <SettingsModal account={account} initialSection={settingsInitialSection} membership={membership} onClose={() => setShowSettings(false)} onOpenDocument={openHelpDocument} />}
+      {showSettings && <SettingsModal account={account} initialSection={settingsInitialSection} membership={membership} onMembershipChange={setMembership} onToast={setToast} onClose={() => setShowSettings(false)} onOpenDocument={openHelpDocument} />}
       {editingMeal && (
         <MealEditor
           meal={editingMeal}
@@ -1130,165 +1154,6 @@ function FavoritesView({ onToast, onUseDish }) {
   )
 }
 
-function DishLibraryView({ mealHistory, onUseDish, focusRequest, onToast }) {
-  const [query, setQuery] = useState('')
-  const [cuisine, setCuisine] = useState('all')
-  const [selectedDish, setSelectedDish] = useState(dishes[2])
-  const [mealType, setMealType] = useState('午餐')
-  const [remoteImages, setRemoteImages] = useState({})
-  const [isExportingPdf, setIsExportingPdf] = useState(false)
-  const { favoriteByDishId, activeCollection, toggleFavorite } = useFavoriteCatalog()
-  const searchInputRef = useRef(null)
-  const graphStats = getDishGraphStats()
-  const searchAnalysis = useMemo(() => analyzeDishQuery(query), [query])
-  const results = useMemo(() => searchDishes(query, cuisine), [query, cuisine])
-  const portion = selectedDish ? calculateDishPortion(selectedDish, mealHistory, mealType) : null
-  const relatedDishes = selectedDish ? getRelatedDishes(selectedDish.id, 6) : []
-  const imageUrls = useMemo(() => [...new Set(results.map((dish) => dishImage(dish)).filter(Boolean).concat(selectedDish ? [dishImage(selectedDish, false)] : []))], [results, remoteImages, selectedDish])
-  const imageReadyMap = usePreloadedImages(imageUrls)
-
-  useEffect(() => {
-    let active = true
-    fetchDishImages(dishes.map((dish) => dish.id))
-      .then((images) => { if (active) setRemoteImages(images) })
-      .catch(() => { if (active) setRemoteImages({}) })
-    return () => { active = false }
-  }, [])
-
-  useEffect(() => {
-    if (!focusRequest) return undefined
-    const frame = window.requestAnimationFrame(() => {
-      searchInputRef.current?.focus()
-      searchInputRef.current?.select()
-    })
-    return () => window.cancelAnimationFrame(frame)
-  }, [focusRequest])
-
-  useEffect(() => {
-    if (!results.length || results.some((dish) => dish.id === selectedDish?.id)) return
-    setSelectedDish(results[0])
-  }, [results, selectedDish?.id])
-
-  function dishImage(dish, thumbnail = true) {
-    const remoteImage = remoteImages[dish.id]
-    return (thumbnail ? remoteImage?.thumbnailUrl : remoteImage?.url) || dish.image
-  }
-
-  async function exportSelectedRecipe() {
-    if (!selectedDish || !portion || isExportingPdf) return
-    setIsExportingPdf(true)
-    try {
-      const result = await exportRecipeToPdf(selectedDish, portion, mealType)
-      if (result?.ok) onToast(result.browserPrint ? '打印窗口已打开，选择“另存为 PDF”即可。' : `${selectedDish.name}食谱 PDF 已保存。`)
-    } catch (error) {
-      onToast(error instanceof Error ? error.message : '食谱 PDF 导出失败。')
-    } finally {
-      setIsExportingPdf(false)
-    }
-  }
-
-  async function handleToggleFavorite(dish, event) {
-    event?.preventDefault()
-    event?.stopPropagation()
-    try {
-      const result = await toggleFavorite({ ...dish, image: dishImage(dish, false) })
-      if (result.action === 'removed') {
-        onToast(`${dish.name}已从收藏里移出`)
-      } else {
-        onToast(`${dish.name}已收藏到${result.collection || activeCollection?.name || '默认收藏'}`)
-      }
-    } catch (error) {
-      onToast(error instanceof Error ? error.message : '收藏操作失败')
-    }
-  }
-
-  return (
-    <div className="page-view library-page">
-      <section className="page-intro library-intro"><div><span className="section-kicker">DISH ATLAS · HASHED</span><h2>八大菜系，今天搜哪一味？</h2><p>菜品、食材、烹饪方式都已建立联系，搜到就能按你的饭量算一份。</p></div><div className="library-stats"><span><strong>{dishes.length}</strong><small>道种子菜</small></span><span><strong>{graphStats.edges}</strong><small>条搭配关系</small></span><span><strong>{Object.keys(remoteImages).length}</strong><small>张云端图</small></span></div></section>
-      <div className="library-searchbar"><Search size={18} /><input ref={searchInputRef} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape') { setQuery(''); event.currentTarget.blur() } }} placeholder="支持拼音缩写、食材、口味、做法：如 gbjd / 猪肉饺 / 低脂鸡胸…" aria-label="搜索菜名、食材、口味或烹饪方式" /><kbd>Ctrl K</kbd></div>
-      {!searchAnalysis.isEmpty && (
-        <div className="library-search-insight">
-          <span>已智能提取</span>
-          {searchAnalysis.displayTokens.length
-            ? searchAnalysis.displayTokens.map((token) => <em key={token}>{token}</em>)
-            : <em>近似菜名</em>}
-          <small>按菜名、食材、做法、口味、拼音/缩写综合排序</small>
-        </div>
-      )}
-      <div className="cuisine-chips">{cuisineMeta.map((item) => <button key={item.id} className={cuisine === item.id ? 'active' : ''} onClick={() => setCuisine(item.id)}><span>{item.emoji}</span>{item.name}</button>)}</div>
-      <div className="library-layout">
-        <section className="dish-results">
-          <div className="library-result-head"><span>找到 {results.length} 道好菜</span><button onClick={() => { setQuery(''); setCuisine('all') }}>清空筛选</button></div>
-          <div className="dish-card-grid">
-            {results.map((dish) => {
-              const imageUrl = dishImage(dish)
-              const imageReady = Boolean(imageReadyMap[imageUrl])
-              const isFavorited = favoriteByDishId.has(dish.id)
-              return (
-                <article
-                  key={dish.id}
-                  className={`dish-card ${selectedDish?.id === dish.id ? 'selected' : ''} ${isFavorited ? 'is-favorited' : ''}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSelectedDish(dish)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      setSelectedDish(dish)
-                    }
-                  }}
-                >
-                  <div
-                    className={`dish-card-image ${imageReady ? 'is-ready' : 'is-loading'}`}
-                    style={imageReady && imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
-                  >
-                    {!imageReady && <span className="image-skeleton-mark" />}
-                    <span>{dish.cuisine}</span>
-                    <i>{remoteImages[dish.id] ? '☁ 云端' : dish.method}</i>
-                    <button
-                      className={`dish-favorite-button ${isFavorited ? 'active' : ''}`}
-                      onClick={(event) => handleToggleFavorite(dish, event)}
-                      title={isFavorited ? '从收藏中移出' : `收藏到${activeCollection?.name || '默认收藏'}`}
-                      aria-label={isFavorited ? `取消收藏：${dish.name}` : `收藏：${dish.name}`}
-                    >
-                      <Heart size={15} fill={isFavorited ? 'currentColor' : 'none'} />
-                    </button>
-                  </div>
-                  <div className="dish-card-copy">
-                    <strong>{dish.name}</strong>
-                    <small>{dish.nutrition.calories} kcal · 蛋白 {dish.nutrition.protein}g</small>
-                    <div>{(dish.tags || ['新收录']).slice(0, 2).map((tag) => <em key={tag}>{tag}</em>)}</div>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-          {!results.length && <div className="empty-library"><span>🍜</span><strong>这道菜还在后厨备菜</strong><small>换个关键词，或者等爬虫把它带回来。</small></div>}
-        </section>
-        {selectedDish && portion && <aside className="dish-detail panel-card">
-          <div
-            className={`dish-detail-image ${imageReadyMap[dishImage(selectedDish, false)] ? 'is-ready' : 'is-loading'}`}
-            style={imageReadyMap[dishImage(selectedDish, false)] ? { backgroundImage: `url(${dishImage(selectedDish, false)})` } : undefined}
-          >
-            {!imageReadyMap[dishImage(selectedDish, false)] && <span className="image-skeleton-mark" />}
-            <span>{selectedDish.cuisine} · {selectedDish.method}{remoteImages[selectedDish.id] ? ' · MinIO' : ''}</span>
-            <button
-              className={`favorite-pin ${favoriteByDishId.has(selectedDish.id) ? 'active' : ''}`}
-              onClick={(event) => handleToggleFavorite(selectedDish, event)}
-              title={favoriteByDishId.has(selectedDish.id) ? '从收藏中移出' : `收藏到${activeCollection?.name || '默认收藏'}`}
-            >
-              <Heart size={15} fill={favoriteByDishId.has(selectedDish.id) ? 'currentColor' : 'none'} />
-            </button>
-            <button onClick={() => setSelectedDish(null)}><X size={16} /></button>
-          </div>
-          <div className="dish-detail-copy"><span className="section-kicker">PORTION ENGINE</span><h3>{selectedDish.name}</h3><p>这份菜是 <strong>{(selectedDish.taste || ['经典']).join('、')}</strong> 风味，系统会按你过去的饭量动态换算。</p><div className="meal-type-switch">{['早餐', '午餐', '晚餐'].map((type) => <button className={mealType === type ? 'active' : ''} key={type} onClick={() => setMealType(type)}>{type}</button>)}</div><div className="portion-highlight"><span>建议系数<strong>{portion.multiplier}×</strong></span><span>单人热量<strong>{portion.nutrition.calories}<small> kcal</small></strong></span><span>蛋白质<strong>{portion.nutrition.protein}<small> g</small></strong></span></div><div className="ingredient-list"><strong>这顿要准备</strong>{portion.ingredients.slice(0, 5).map((ingredient) => <span key={ingredient.name}><em>{ingredient.name}</em><b>{ingredient.grams}g</b></span>)}</div><small className="portion-reason"><Sparkles size={13} /> {portion.reason}</small><div className="dish-detail-actions"><button className="primary-full" onClick={() => onUseDish({ ...selectedDish, image: dishImage(selectedDish, false) }, mealType)}>按我的饭量加入{mealType} <Plus size={16} /></button><button className="outline-full" onClick={exportSelectedRecipe} disabled={isExportingPdf}><FileDown size={15} /> {isExportingPdf ? '正在生成 PDF…' : '导出这份食谱 PDF'}</button></div></div>
-          <div className="relation-map"><div className="relation-map-head"><strong>这道菜和谁有关系？</strong><small>食材 · 做法 · 风味 · 菜系</small></div><div className="relation-canvas"><svg className="relation-lines" viewBox="0 0 320 210" preserveAspectRatio="none" aria-hidden="true">{relatedDishes.map((relatedDish, index) => { const point = relationNodeLayout[index]; return <g key={relatedDish.id}><line x1="160" y1="105" x2={point.x} y2={point.y} /><circle cx={point.x} cy={point.y} r="3" /><text x={(160 + point.x) / 2} y={(105 + point.y) / 2 - 4}>{relatedDish.relationScore}</text></g> })}</svg><span className="relation-center">{selectedDish.name}</span>{relatedDishes.map((relatedDish, index) => { const point = relationNodeLayout[index]; return <button key={relatedDish.id} className="relation-node" style={{ left: `${point.x / 3.2}%`, top: `${point.y / 2.1}%` }} onClick={() => setSelectedDish(relatedDish)} title={`关系强度 ${relatedDish.relationScore}`}><i>{relatedDish.name}</i><small>{relatedDish.relationReason}</small></button> })}{!relatedDishes.length && <small className="relation-empty">暂时没有达到阈值的关系</small>}</div></div>
-        </aside>}
-      </div>
-    </div>
-  )
-}
-
 class AssistantErrorBoundary extends Component {
   constructor(props) {
     super(props)
@@ -1486,9 +1351,16 @@ function AssistantPanel({ module, meals, mealHistory, fitnessTrainingPlan, famil
 }
 
 const fallbackMembershipProducts = [
-  { code: 'pro_month', name: 'Pro 饭搭子月度会员', amountFen: 2999, durationDays: 31 },
-  { code: 'pro_year', name: 'Pro 饭搭子年度会员', amountFen: 19999, durationDays: 366 },
+  { code: 'pro_month', name: 'Pro 饭搭子月度会员', amountFen: 2999, durationDays: 31, billingPeriod: 'month', billingPeriodCount: 1 },
+  { code: 'pro_year', name: 'Pro 饭搭子年度会员', amountFen: 19999, durationDays: 366, billingPeriod: 'year', billingPeriodCount: 1 },
 ]
+
+function formatBillingPeriod(product) {
+  const count = Number(product?.billingPeriodCount || 1)
+  if (product?.billingPeriod === 'month') return `${count} 个自然月会员权益`
+  if (product?.billingPeriod === 'year') return `${count} 个自然年会员权益`
+  return `${Number(product?.durationDays || 0)} 天会员权益`
+}
 
 function formatMoney(amountFen) {
   return `¥${(Number(amountFen || 0) / 100).toFixed(2)}`
@@ -1528,7 +1400,8 @@ function MembershipModal({ account, onClose, onActivate, onRequireLogin, onToast
       setQrDataUrl('')
       return () => { active = false }
     }
-    QRCode.toDataURL(order.qrPayload, { width: 240, margin: 1, color: { dark: '#292620', light: '#ffffff' } })
+    import('qrcode')
+      .then(({ default: QRCode }) => QRCode.toDataURL(order.qrPayload, { width: 240, margin: 1, color: { dark: '#292620', light: '#ffffff' } }))
       .then((url) => { if (active) setQrDataUrl(url) })
       .catch(() => { if (active) setError('付款码生成失败，请重新下单。') })
     return () => { active = false }
@@ -1617,7 +1490,7 @@ function MembershipModal({ account, onClose, onActivate, onRequireLogin, onToast
           <div className="price-options">
             {products.map((item) => {
               const yearly = item.code === 'pro_year'
-              return <button key={item.code} className={`${productCode === item.code ? 'selected ' : ''}${yearly ? 'hot' : ''}`} onClick={() => setProductCode(item.code)}>{yearly && <i>🔥 HOT · 年度更划算</i>}<span>{yearly ? '年度饭搭子' : '月度饭搭子'}</span><strong>{formatMoney(item.amountFen)}<small>/{yearly ? '年' : '月'}</small></strong><em>{item.durationDays} 天会员权益</em></button>
+              return <button key={item.code} className={`${productCode === item.code ? 'selected ' : ''}${yearly ? 'hot' : ''}`} onClick={() => setProductCode(item.code)}>{yearly && <i>🔥 HOT · 年度更划算</i>}<span>{yearly ? '年度饭搭子' : '月度饭搭子'}</span><strong>{formatMoney(item.amountFen)}<small>/{yearly ? '年' : '月'}</small></strong><em>{formatBillingPeriod(item)}</em></button>
             })}
           </div>
           <div className="payment-channel-picker">
@@ -1656,7 +1529,77 @@ function MealEditor({ meal, onClose, onSave }) {
   )
 }
 
-function SettingsModal({ account: activeAccount, initialSection = 'account', membership, onClose, onOpenDocument }) {
+const billingStatusLabels = Object.freeze({
+  pending: '待支付',
+  paid: '已支付',
+  failed: '支付失败',
+  closed: '已关闭',
+  expired: '已过期',
+  refunded: '已退款',
+})
+
+function formatMembershipDate(value, includeTime = false) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) return '—'
+  return includeTime
+    ? date.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    : date.toLocaleDateString('zh-CN')
+}
+
+function MembershipSettingsSection({ account, membership, onMembershipChange, onToast }) {
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(Boolean(account))
+  const [busyOrderId, setBusyOrderId] = useState('')
+  const [error, setError] = useState('')
+  const isPro = Boolean(membership?.isPro)
+
+  useEffect(() => {
+    let active = true
+    if (!account) {
+      setOrders([])
+      setLoading(false)
+      return () => { active = false }
+    }
+    setLoading(true)
+    listBillingOrders(8)
+      .then((payload) => { if (active) setOrders(payload?.orders || []) })
+      .catch((caughtError) => { if (active) setError(caughtError.message || '会员订单读取失败。') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [account?.id])
+
+  async function reconcile(order) {
+    if (!order?.id || busyOrderId) return
+    setBusyOrderId(order.id)
+    setError('')
+    try {
+      const payload = await reconcileBillingOrder(order.id)
+      if (payload?.membership) onMembershipChange?.(payload.membership)
+      setOrders((current) => current.map((item) => item.id === order.id ? payload.order : item))
+      onToast?.(payload?.order?.status === 'paid' ? '支付平台已确认到账，会员权益已更新。' : '查单完成，暂未发现新的到账结果。')
+    } catch (caughtError) {
+      setError(caughtError.message || '支付平台查单失败。')
+    } finally {
+      setBusyOrderId('')
+    }
+  }
+
+  return <div className="settings-section membership-settings-section">
+    <span className="settings-kicker">MEMBERSHIP</span><h3>会员信息</h3>
+    <div className={`membership-status ${isPro ? 'is-pro' : ''}`}><span>{isPro ? '👑' : '🍚'}</span><div><small>当前方案</small><strong>{isPro ? membership.productName || 'Pro 饭搭子' : '普通饭友 · 免费版'}</strong><p>{isPro ? '家庭、乐龄、健身模式均已解锁' : '日常模式永久免费，升级可解锁三种专属场景'}</p></div></div>
+    {membership?.reminder && <div className={`membership-reminder ${membership.reminder.level}`}><span>⏰</span><div><strong>续费提醒</strong><small>{membership.reminder.message} 当前不会自动扣款。</small></div></div>}
+    <div className="settings-rows membership-detail-rows"><span><em>会员有效期至</em><strong>{formatMembershipDate(membership?.validUntil)}</strong></span><span><em>剩余时间</em><strong>{isPro ? `${membership.daysRemaining || 0} 天` : '—'}</strong></span><span><em>自动续费</em><strong>{membership?.autoRenew ? '已开启' : '未开启 · 不会自动扣款'}</strong></span></div>
+    <div className="billing-history-head"><div><strong>最近订单</strong><small>价格和周期均以服务端订单为准</small></div>{loading && <i>读取中…</i>}</div>
+    {error && <p className="billing-history-error">{error}</p>}
+    {!account ? <div className="billing-history-empty">登录后可查看会员和续费记录。</div> : !loading && !orders.length ? <div className="billing-history-empty">还没有会员订单。</div> : <div className="billing-history-list">{orders.map((order) => {
+      const canReconcile = ['pending', 'expired', 'failed'].includes(order.status) && ['wechat', 'alipay'].includes(order.provider)
+      return <article key={order.id}><span className={`billing-order-state ${order.status}`}>{billingStatusLabels[order.status] || order.status}</span><div><strong>{order.productName}</strong><small>{formatMembershipDate(order.createdAt, true)} · {order.provider === 'wechat' ? '微信支付' : order.provider === 'alipay' ? '支付宝' : '开发测试'}</small></div><em>{formatMoney(order.amountFen)}</em>{canReconcile && <button type="button" disabled={Boolean(busyOrderId)} onClick={() => reconcile(order)}>{busyOrderId === order.id ? '查单中…' : '向平台查单'}</button>}</article>
+    })}</div>}
+  </div>
+}
+
+function SettingsModal({ account: activeAccount, initialSection = 'account', membership, onMembershipChange, onToast, onClose, onOpenDocument }) {
   const [section, setSection] = useState(initialSection)
   const [aiConfig, setAiConfig] = useState(managedAiDefaults)
   const [aiBusy, setAiBusy] = useState(false)
@@ -1700,8 +1643,6 @@ function SettingsModal({ account: activeAccount, initialSection = 'account', mem
   }
 
   const account = activeAccount || readDemoAccount()
-  const isPro = Boolean(membership?.isPro)
-  const membershipExpiry = membership?.validUntil ? new Date(membership.validUntil).toLocaleDateString('zh-CN') : '—'
   const accountLabel = account?.displayName || (account?.loginType === 'phone' ? account.phone : account?.loginType === 'email' ? account.email : account?.provider || '尚未登录')
   const settingsSections = [
     { id: 'account', label: '账号信息', icon: UserRound },
@@ -1716,7 +1657,7 @@ function SettingsModal({ account: activeAccount, initialSection = 'account', mem
       <div className="settings-title"><span><Settings size={20} /></span><div><small>SETTINGS & HELP</small><h2>把你的饭碗设置好</h2></div></div>
       <div className="settings-layout"><nav>{settingsSections.map((item) => { const Icon = item.icon; return <button key={item.id} className={section === item.id ? 'active' : ''} onClick={() => setSection(item.id)}><Icon size={17} />{item.label}<ChevronRight size={14} /></button> })}</nav><section>
         {section === 'account' && <div className="settings-section"><span className="settings-kicker">ACCOUNT</span><h3>账号信息</h3><div className="account-summary"><span className="avatar">小</span><div><strong>{account ? '已登录饭友' : '游客饭友'}</strong><small>{accountLabel}</small></div><i>{account ? '已验证' : '未登录'}</i></div><div className="settings-rows"><span><em>登录方式</em><strong>{account?.loginType === 'phone' ? '手机验证码 + 密码' : account?.loginType === 'email' ? '邮箱 + 密码' : account?.provider || '—'}</strong></span><span><em>本地数据</em><strong>保存在当前设备</strong></span><span><em>账号安全</em><strong>滑块验证已开启</strong></span></div></div>}
-        {section === 'membership' && <div className="settings-section"><span className="settings-kicker">MEMBERSHIP</span><h3>会员信息</h3><div className={`membership-status ${isPro ? 'is-pro' : ''}`}><span>{isPro ? '👑' : '🍚'}</span><div><small>当前方案</small><strong>{isPro ? 'Pro 饭搭子' : '普通饭友 · 免费版'}</strong><p>{isPro ? '家庭、乐龄、健身模式均已解锁' : '日常模式永久免费，升级可解锁三种专属场景'}</p></div></div><div className="settings-rows"><span><em>会员有效期至</em><strong>{membershipExpiry}</strong></span><span><em>权益来源</em><strong>{isPro ? '服务端支付订单' : '暂无有效订单'}</strong></span><span><em>自动续费</em><strong>未开启</strong></span></div></div>}
+        {section === 'membership' && <MembershipSettingsSection account={activeAccount} membership={membership} onMembershipChange={onMembershipChange} onToast={onToast} />}
         {section === 'ai' && (
           <div className="settings-section ai-settings-section">
             <span className="settings-kicker">MANAGED MEAL AI</span>
@@ -1741,7 +1682,7 @@ function SettingsModal({ account: activeAccount, initialSection = 'account', mem
           </div>
         )}
         {section === 'shortcuts' && <div className="settings-section help-section"><span className="settings-kicker">KEYBOARD SHORTCUTS</span><h3>键盘快一点，开饭早一点</h3><p>导航、搜索、小饭 AI、场景切换和窗口操作已经整理成独立 PDF，阅读时不会显示代码内容。</p><button className="readme-button" onClick={() => onOpenDocument('keyboard-shortcuts')}><span><Keyboard size={20} /></span><div><strong>打开快捷键说明 PDF</strong><small>导航操作 · 效率工具 · 窗口控制</small></div><ArrowRight size={17} /></button><div className="help-note"><Keyboard size={16} /><span>随时按 Ctrl + / 可以直接打开这份快捷键说明。</span></div></div>}
-        {section === 'help' && <div className="settings-section help-section"><span className="settings-kicker">HELP CENTER</span><h3>有问题，别饿着</h3><p>README 已整理为适合阅读的使用说明 PDF，包含主要功能、使用流程、数据安全和常见问题，不再以源码或 Markdown 形式展示。</p><button className="readme-button" onClick={() => onOpenDocument('user-guide')}><span><BookOpen size={20} /></span><div><strong>打开 README 使用说明 PDF</strong><small>快速上手 · 功能说明 · 常见问题</small></div><ArrowRight size={17} /></button><div className="help-note"><ShieldCheck size={16} /><span>营养建议只作生活参考，疾病治疗请咨询专业医生。</span></div></div>}
+        {section === 'help' && <div className="settings-section help-section"><span className="settings-kicker">HELP CENTER</span><h3>有问题，别饿着</h3><p>README 使用说明和产品官网会同步记录当前能力、使用流程、数据边界与版本状态。</p><button className="readme-button" onClick={() => onOpenDocument('user-guide')}><span><BookOpen size={20} /></span><div><strong>打开 README 使用说明 PDF</strong><small>快速上手 · 功能说明 · 常见问题</small></div><ArrowRight size={17} /></button><a className="readme-button official-site-button" href={OFFICIAL_SITE_URL} target="_blank" rel="noreferrer"><span><Globe2 size={20} /></span><div><strong>访问“好吃的今天”官网</strong><small>产品进展 · 版本说明 · Windows 下载</small></div><ArrowRight size={17} /></a><div className="help-note"><ShieldCheck size={16} /><span>营养建议只作生活参考，疾病治疗请咨询专业医生。</span></div></div>}
       </section></div>
     </ModalShell>
   )

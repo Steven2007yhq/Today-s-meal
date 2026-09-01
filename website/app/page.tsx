@@ -10,14 +10,14 @@ const features = [
   },
   {
     number: "02",
-    title: "150+ 道菜，搜到就能吃",
-    copy: "覆盖八大菜系与节日、西式菜品。按菜名、食材、口味和做法搜索，再从一万多条关系中找到相近搭配。",
+    title: "5,000 道菜，搜到就能搭",
+    copy: "完整目录采用服务端分页，覆盖传统菜、开源配方、主食小吃与家常搭配；图片不足时只复用明确标注的安全同类示意图。",
     accent: "green",
   },
   {
     number: "03",
-    title: "饭量不是标准答案",
-    copy: "饭量引擎结合你的同餐次历史与热量目标，换算食材克数和营养数据，让建议更接近你真正吃得下的份量。",
+    title: "手头有多少，就按多少做",
+    copy: "输入一种食材可同比例换算；输入两种以上会启用可解释的多食材最小二乘拟合，补齐剩余食材并显示拟合偏差。",
     accent: "blue",
   },
   {
@@ -26,6 +26,13 @@ const features = [
     copy: "按日期回看餐食，把喜欢的菜放进收藏夹，阅读营养趋势，还能把单道食谱或一周菜单导出为 PDF。",
     accent: "gold",
   },
+];
+
+const progress = [
+  { value: "5,000", label: "道已发布菜品", copy: "服务端检索、地区/类型筛选和分页，桌面端保留精简离线基础库。" },
+  { value: "70.1%", label: "安全图片覆盖", copy: "185 道专属图与 3,319 道保守同类图；无法可靠匹配时宁可留空。" },
+  { value: "86 / 86", label: "自动化测试通过", copy: "覆盖目录质量、图片匹配、多食材拟合、身份、支付与桌面交互基础能力。" },
+  { value: "2026.08.25", label: "开发进展基线", copy: "官网与 README 使用说明按当前源码更新；下一安装包仍待重新打包和签名。" },
 ];
 
 const scenes = [
@@ -40,6 +47,7 @@ const faqs = [
   ["小饭 AI 会透露底层模型吗？", "不会。应用对外统一使用“小饭 AI”品牌，客户端不会展示上游服务商、模型名称、接口凭证或后台通道信息。"],
   ["需要一直联网吗？", "菜品浏览和部分本地记录可继续使用；账号、云端收藏、小饭 AI 和在线图片等能力需要网络连接。"],
   ["营养建议可以代替医生吗？", "不可以。所有营养与 AI 建议只作日常饮食参考，疾病、过敏、孕产、儿童喂养或用药问题请咨询专业人员。"],
+  ["为什么官网功能比安装包更新？", "官网同时记录当前开发版进展。下载中心的 v1.1.0 是 2026-08-14 打包版本；5,000 道服务端目录、类别图片与多食材拟合等后续改进要等下一次重新打包、签名和升级回归后才会完整进入安装包。"],
   ["哪个版本适合我？", "优先选择标有“推荐”的最新版。历史版本用于旧设备兼容和问题回退，不会获得最新功能与安全改进。"],
 ];
 
@@ -55,8 +63,10 @@ export default function Home() {
         </a>
         <nav aria-label="主导航">
           <a href="#advantages">产品优势</a>
+          <a href="#progress">当前进展</a>
           <a href="#scenes">场景模式</a>
           <a href="#xiaofan">小饭 AI</a>
+          <a href="/docs/README.pdf" target="_blank" rel="noreferrer">使用说明</a>
           <a href="#download">下载</a>
         </nav>
         <a className="header-download" href={`/api/downloads/${latest.version}`}>下载 Windows 版</a>
@@ -64,12 +74,12 @@ export default function Home() {
 
       <section className="hero" id="top">
         <div className="hero-copy">
-          <div className="eyebrow"><span /> Windows 桌面版 · 封闭测试开放下载</div>
+          <div className="eyebrow"><span /> Windows 桌面版 · 当前进展更新至 2026.08.25</div>
           <h1>把每天吃什么，<br /><em>变成一件轻松的事。</em></h1>
-          <p>从今天的一日三餐，到一家人的长期餐桌。好吃的今天用菜谱、饭量记录、日历和小饭 AI，把饮食规划变成一个温暖、清晰、能坚持的日常。</p>
+          <p>从 5,000 道中华菜品，到按手头多种食材自动补齐配方。好吃的今天用三餐计划、饭量记录、日历和小饭 AI，把饮食规划变成一个温暖、清晰、能坚持的日常。</p>
           <div className="hero-actions">
             <a className="primary-cta" href={`/api/downloads/${latest.version}`}><span>↓</span> 下载最新版 <small>v{latest.version}</small></a>
-            <a className="secondary-cta" href="#advantages">看看它能做什么 <span>→</span></a>
+            <a className="secondary-cta" href="/docs/README.pdf" target="_blank" rel="noreferrer">查看使用说明 <span>→</span></a>
           </div>
           <div className="hero-meta">
             <span><i>✓</i> Windows 10 / 11</span>
@@ -89,13 +99,13 @@ export default function Home() {
                 <small>我的餐桌</small>
                 <i className="active">⌂ <span>好吃的今天</span></i>
                 <i>□ <span>餐食日历</span></i>
-                <i>⌕ <span>八大菜系库</span></i>
+                <i>⌕ <span>中华菜品库</span></i>
                 <i>♡ <span>我的收藏</span></i>
                 <small>场景模式</small>
                 <i>◉ <span>日常模式</span></i>
               </aside>
               <div className="app-content">
-                <div className="preview-top"><span><b>8 月 14 日 · 星期五</b><strong>日常模式</strong></span><i>⌕ 搜食谱、食材</i></div>
+                <div className="preview-top"><span><b>8 月 25 日 · 星期二</b><strong>日常模式</strong></span><i>⌕ 搜食谱、食材</i></div>
                 <div className="welcome-preview">
                   <span><small>今日推荐</small><strong>吃得舒服，<br />日子就有底气。</strong><em>三餐已为你安排好</em></span>
                   <b>🍲</b>
@@ -118,10 +128,20 @@ export default function Home() {
       </section>
 
       <section className="proof-strip" aria-label="产品数据">
-        <span><strong>150<sup>+</sup></strong><small>可搜索菜品</small></span>
-        <span><strong>10,000<sup>+</sup></strong><small>菜品关联关系</small></span>
+        <span><strong>5,000</strong><small>可搜索菜品</small></span>
+        <span><strong>119,954</strong><small>精选关联关系</small></span>
         <span><strong>4</strong><small>独立饮食场景</small></span>
-        <span><strong>1</strong><small>位懂吃饭的小饭 AI</small></span>
+        <span><strong>86<sup>/86</sup></strong><small>自动化测试通过</small></span>
+      </section>
+
+      <section className="progress-section" id="progress">
+        <div className="section-heading">
+          <div><span className="section-kicker">CURRENT PRODUCT BASELINE</span><h2>现在做到哪一步，写清楚。</h2></div>
+          <p>这些数字描述当前源码和本地联调结果，不等同于 2026-08-14 打包的 v1.1.0 安装包。</p>
+        </div>
+        <div className="progress-grid">
+          {progress.map((item) => <article key={item.label}><strong>{item.value}</strong><span>{item.label}</span><p>{item.copy}</p></article>)}
+        </div>
       </section>
 
       <section className="purpose-section">
@@ -201,6 +221,7 @@ export default function Home() {
 
       <section className="download-section" id="download">
         <div className="download-heading"><span className="section-kicker">DOWNLOAD CENTER</span><h2>选一个版本，今天就好好吃饭。</h2><p>优先下载最新版；历史版本仅用于兼容和问题回退。</p></div>
+        <div className="development-notice"><strong>安装包与开发版说明</strong><p>当前推荐下载仍是 2026-08-14 的 v1.1.0 封闭测试包。官网上展示的 5,000 道服务端目录、类别图片改进和多食材拟合属于 2026-08-25 开发进展，需等待下一次重新打包、代码签名和升级回归后才会完整随安装包提供。</p><a href="/docs/README.pdf" target="_blank" rel="noreferrer">查看当前 README 使用说明 →</a></div>
         <div className="release-grid">
           {releases.map((release) => (
             <article className={release.recommended ? "release-card recommended" : "release-card"} key={release.version}>
@@ -231,7 +252,7 @@ export default function Home() {
       <footer>
         <div className="brand"><span className="brand-mark">吃</span><span><strong>好吃的今天</strong><small>一日三餐 · 不再为难</small></span></div>
         <p>面向中国家庭的智能饮食规划 Windows 桌面应用。</p>
-        <span>© 2026 好吃的今天产品团队 · 营养建议仅作生活参考</span>
+        <span>© 2026 好吃的今天产品团队 · <a href="/docs/README.pdf" target="_blank" rel="noreferrer">README 使用说明</a> · 营养建议仅作生活参考</span>
       </footer>
     </main>
   );

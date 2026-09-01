@@ -60,14 +60,18 @@ async function exportDocument(title, html) {
 
 export function exportRecipeToPdf(dish, portion, mealType) {
   const ingredients = portion.ingredients.map((ingredient) => `<span><em>${escapeHtml(ingredient.name)}</em><b>${escapeHtml(ingredient.grams)}g</b></span>`).join('')
+  const nutritionPending = dish.nutritionConfidence === 'unverified'
+  const calories = nutritionPending ? '待核验' : `${escapeHtml(portion.nutrition.calories)} kcal`
+  const protein = nutritionPending ? '待核验' : `${escapeHtml(portion.nutrition.protein)} g`
+  const nutritionNote = nutritionPending ? '本配方营养数据仍待核验，请勿把空缺数值作为饮食依据。' : '营养数据为估算值，只作日常饮食参考。'
   const title = `${dish.name}食谱`
   const content = `
     <header><small>好吃的今天 · PERSONAL RECIPE</small><h1>${escapeHtml(dish.name)}</h1><p>${escapeHtml(dish.cuisine)} · ${escapeHtml(dish.method)} · ${escapeHtml(mealType)}建议份量 ${escapeHtml(portion.multiplier)}×</p></header>
     <main>
-      <section class="summary"><span>热量<strong>${escapeHtml(portion.nutrition.calories)} kcal</strong></span><span>蛋白质<strong>${escapeHtml(portion.nutrition.protein)} g</strong></span><span>风味<strong>${escapeHtml((dish.taste || ['经典']).join('、'))}</strong></span></section>
+      <section class="summary"><span>热量<strong>${calories}</strong></span><span>蛋白质<strong>${protein}</strong></span><span>风味<strong>${escapeHtml((dish.taste || ['经典']).join('、'))}</strong></span></section>
       <section class="card"><h2>食材与用量</h2><div class="ingredients">${ingredients}</div></section>
       <section class="card"><h2>个性化换算说明</h2><p>${escapeHtml(portion.reason)}</p><p>标签：${escapeHtml((dish.tags || ['家常']).join(' · '))}</p></section>
-      <footer>由“好吃的今天”按历史饭量生成。营养数据为估算值，只作日常饮食参考；疾病治疗及特殊医学饮食请咨询医生或注册营养师。</footer>
+      <footer>由“好吃的今天”按历史饭量生成。${nutritionNote}疾病治疗及特殊医学饮食请咨询医生或注册营养师。</footer>
     </main>`
   return exportDocument(title, documentTemplate(title, content))
 }

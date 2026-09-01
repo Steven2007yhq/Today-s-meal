@@ -5,7 +5,7 @@ export const quickQuestions = [
 ]
 
 export const publishedNotifications = [
-  { id: 'product-launch', emoji: '🎉', title: '新产品上线啦', description: '餐食日历和八大菜系库已经焕新，快来安排下一顿。', time: '刚刚' },
+  { id: 'product-launch', emoji: '🎉', title: '中华菜品库焕新', description: '5000 道传统菜、开源配方与家常搭配已可分页检索。', time: '刚刚' },
   { id: 'cloud-gallery', emoji: '🖼️', title: '菜品云端图库已更新', description: '新一批中国美食图片正在入库，找菜更有食欲。', time: '今天' },
   { id: 'weekly-report', emoji: '📊', title: '每周营养报告已生成', description: '本周膳食表现出炉，看看哪一顿最会吃。', time: '昨天' },
 ]

@@ -68,6 +68,17 @@ export function readBillingOrder(orderId) {
   return requestBilling(`/api/billing/orders/${encodeURIComponent(orderId)}`, { timeoutMs: 6_000 })
 }
 
+export function listBillingOrders(limit = 20) {
+  return requestBilling(`/api/billing/orders?limit=${Math.max(1, Math.min(50, Number(limit) || 20))}`, { timeoutMs: 6_000 })
+}
+
+export function reconcileBillingOrder(orderId) {
+  return requestBilling(`/api/billing/orders/${encodeURIComponent(orderId)}/reconcile`, {
+    method: 'POST',
+    timeoutMs: 15_000,
+  })
+}
+
 export function completeDevelopmentOrder(orderId) {
   return requestBilling(`/api/billing/dev/orders/${encodeURIComponent(orderId)}/complete`, {
     method: 'POST',

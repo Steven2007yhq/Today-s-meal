@@ -7,6 +7,7 @@ export const INSECURE_DEFAULTS = Object.freeze({
   uploadToken: 'replace-this-development-token',
   authSecret: 'change-this-development-auth-secret',
   assignmentSecret: 'change-this-development-assignment-secret',
+  billingAdminToken: 'change-this-development-billing-admin-token',
   databaseUrl: 'postgresql://mealapp:mealapp_dev_password@127.0.0.1:55432/jintianchisha',
   minioAccessKey: 'mealapp_minio',
   minioSecretKey: 'mealapp_minio_dev_password',
@@ -39,7 +40,7 @@ export const config = {
   port: numberFromEnv('IMAGE_API_PORT', 8787),
   databaseUrl: process.env.DATABASE_URL || INSECURE_DEFAULTS.databaseUrl,
   uploadToken: process.env.IMAGE_UPLOAD_TOKEN || INSECURE_DEFAULTS.uploadToken,
-  corsOrigins: (process.env.IMAGE_API_CORS_ORIGINS || 'http://localhost:5173,null').split(',').map((origin) => origin.trim()),
+  corsOrigins: (process.env.IMAGE_API_CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,null').split(',').map((origin) => origin.trim()),
   auth: {
     secret: process.env.AUTH_SESSION_SECRET || INSECURE_DEFAULTS.authSecret,
     sessionTtlSeconds: numberFromEnv('AUTH_SESSION_TTL_SECONDS', 60 * 60 * 24 * 30),
@@ -64,6 +65,7 @@ export const config = {
     gatewayToken: process.env.AI_GATEWAY_TOKEN || '',
   },
   billing: {
+    adminToken: process.env.BILLING_ADMIN_TOKEN || INSECURE_DEFAULTS.billingAdminToken,
     notifyBaseUrl: process.env.PAYMENT_NOTIFY_BASE_URL || '',
     orderTtlMinutes: numberFromEnv('PAYMENT_ORDER_TTL_MINUTES', 15),
     devSimulation: booleanFromEnv('PAYMENT_DEV_SIMULATION'),

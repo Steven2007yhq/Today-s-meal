@@ -1,0 +1,352 @@
+[
+  {
+    "id": "category-ref-20260825-01",
+    "file": "01-shrimp-shumai.png",
+    "name": "虾仁烧卖",
+    "cuisine": "家常菜",
+    "method": "蒸",
+    "dishType": "主食",
+    "ingredients": ["虾仁", "面粉"],
+    "taste": ["鲜香"]
+  },
+  {
+    "id": "category-ref-20260825-02",
+    "file": "02-pork-vegetable-dumplings.png",
+    "name": "韭菜猪肉饺子",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["猪肉", "韭菜"],
+    "taste": ["鲜香"]
+  },
+  {
+    "id": "category-ref-20260825-03",
+    "file": "03-pork-wontons.png",
+    "name": "猪肉馄饨",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["猪肉", "馄饨皮"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-04",
+    "file": "04-vegetable-tofu-soup.png",
+    "name": "蔬菜豆腐汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["豆腐", "白菜"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-05",
+    "file": "05-beef-rice-noodle-soup.png",
+    "name": "牛肉河粉",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["牛肉", "河粉"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-06",
+    "file": "06-mushroom-tofu-soup.png",
+    "name": "香菇豆腐汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["豆腐", "香菇"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-07",
+    "file": "07-corn-rib-soup.png",
+    "name": "玉米排骨汤",
+    "cuisine": "家常菜",
+    "method": "炖",
+    "dishType": "汤羹",
+    "ingredients": ["排骨", "玉米"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-08",
+    "file": "08-mushroom-chicken-soup.png",
+    "name": "香菇鸡汤",
+    "cuisine": "家常菜",
+    "method": "炖",
+    "dishType": "汤羹",
+    "ingredients": ["鸡肉", "香菇"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-09",
+    "file": "09-mixed-seafood-soup.png",
+    "name": "海鲜汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["虾", "鱼肉", "蛤蜊"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-10",
+    "file": "10-soy-tofu.png",
+    "name": "凉拌豆腐",
+    "cuisine": "家常菜",
+    "method": "凉拌",
+    "dishType": "凉菜",
+    "ingredients": ["豆腐", "小葱"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-11",
+    "file": "11-steamed-fish.png",
+    "name": "清蒸鱼",
+    "cuisine": "家常菜",
+    "method": "蒸",
+    "dishType": "蒸菜",
+    "ingredients": ["鱼肉", "生姜"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-12",
+    "file": "12-poached-shrimp.png",
+    "name": "白灼虾",
+    "cuisine": "家常菜",
+    "method": "白灼",
+    "dishType": "热菜",
+    "ingredients": ["虾", "生姜"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-13",
+    "file": "13-clam-soup.png",
+    "name": "蛤蜊汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["蛤蜊", "生姜"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-14",
+    "file": "14-grilled-spicy-fish.png",
+    "name": "香辣烤鱼",
+    "cuisine": "家常菜",
+    "method": "烤",
+    "dishType": "烧烤",
+    "ingredients": ["鱼肉", "辣椒"],
+    "taste": ["香辣"]
+  },
+  {
+    "id": "category-ref-20260825-15",
+    "file": "15-grilled-tofu.png",
+    "name": "香辣烤豆腐",
+    "cuisine": "家常菜",
+    "method": "烤",
+    "dishType": "烧烤",
+    "ingredients": ["豆腐", "辣椒"],
+    "taste": ["香辣"]
+  },
+  {
+    "id": "category-ref-20260825-16",
+    "file": "16-grilled-pork-belly.png",
+    "name": "烤五花肉",
+    "cuisine": "家常菜",
+    "method": "烤",
+    "dishType": "烧烤",
+    "ingredients": ["五花肉", "生菜"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-17",
+    "file": "17-grilled-chicken-wings.png",
+    "name": "香辣烤鸡翅",
+    "cuisine": "家常菜",
+    "method": "烤",
+    "dishType": "烧烤",
+    "ingredients": ["鸡翅", "辣椒"],
+    "taste": ["香辣"]
+  },
+  {
+    "id": "category-ref-20260825-18",
+    "file": "18-steamed-pork-patty.png",
+    "name": "香菇蒸肉饼",
+    "cuisine": "家常菜",
+    "method": "蒸",
+    "dishType": "蒸菜",
+    "ingredients": ["猪肉", "香菇"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-19",
+    "file": "19-beef-noodle-soup.png",
+    "name": "牛肉汤面",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["牛肉", "面条"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-20",
+    "file": "20-cold-tossed-noodles.png",
+    "name": "凉拌面",
+    "cuisine": "家常菜",
+    "method": "拌",
+    "dishType": "主食",
+    "ingredients": ["面条", "黄瓜"],
+    "taste": ["香辣"]
+  },
+  {
+    "id": "category-ref-20260825-21",
+    "file": "21-stir-fried-noodles.png",
+    "name": "肉丝炒面",
+    "cuisine": "家常菜",
+    "method": "炒",
+    "dishType": "主食",
+    "ingredients": ["猪肉", "面条"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-22",
+    "file": "22-beef-stewed-rice.png",
+    "name": "番茄牛肉烩饭",
+    "cuisine": "家常菜",
+    "method": "烩",
+    "dishType": "主食",
+    "ingredients": ["牛肉", "米饭", "番茄"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-23",
+    "file": "23-claypot-rice.png",
+    "name": "腊味煲仔饭",
+    "cuisine": "粤菜",
+    "method": "煲",
+    "dishType": "主食",
+    "ingredients": ["腊肠", "米饭"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-24",
+    "file": "24-ham-egg-fried-rice.png",
+    "name": "火腿鸡蛋炒饭",
+    "cuisine": "家常菜",
+    "method": "炒",
+    "dishType": "主食",
+    "ingredients": ["火腿", "鸡蛋", "米饭"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-25",
+    "file": "25-grilled-meat-skewers.png",
+    "name": "烤羊肉串",
+    "cuisine": "西北菜",
+    "method": "烤",
+    "dishType": "烧烤",
+    "ingredients": ["羊肉", "洋葱"],
+    "taste": ["香辣"]
+  },
+  {
+    "id": "category-ref-20260825-26",
+    "file": "26-chicken-mushroom-congee.png",
+    "name": "鸡丝粥",
+    "cuisine": "家常菜",
+    "method": "熬粥",
+    "dishType": "粥品",
+    "ingredients": ["鸡肉", "大米"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-27",
+    "file": "27-seafood-congee.png",
+    "name": "海鲜粥",
+    "cuisine": "粤菜",
+    "method": "熬粥",
+    "dishType": "粥品",
+    "ingredients": ["虾", "鱼肉", "大米"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-28",
+    "file": "28-millet-congee.png",
+    "name": "小米粥",
+    "cuisine": "家常菜",
+    "method": "熬粥",
+    "dishType": "粥品",
+    "ingredients": ["小米", "枸杞"],
+    "taste": ["清淡"]
+  },
+  {
+    "id": "category-ref-20260825-29",
+    "file": "29-plain-congee.png",
+    "name": "白粥",
+    "cuisine": "家常菜",
+    "method": "熬粥",
+    "dishType": "粥品",
+    "ingredients": ["大米", "水"],
+    "taste": ["清淡"]
+  },
+  {
+    "id": "category-ref-20260825-30",
+    "file": "30-vegetable-chicken-congee.png",
+    "name": "香菇鸡肉粥",
+    "cuisine": "家常菜",
+    "method": "熬粥",
+    "dishType": "粥品",
+    "ingredients": ["鸡肉", "大米", "香菇"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-31",
+    "file": "31-pork-meatball-soup.png",
+    "name": "清汤肉丸",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "汤羹",
+    "ingredients": ["猪肉", "小葱"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260825-32",
+    "file": "32-garlic-eggplant.png",
+    "name": "蒜蓉蒸茄子",
+    "cuisine": "家常菜",
+    "method": "蒸",
+    "dishType": "蒸菜",
+    "ingredients": ["茄子", "大蒜"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-33",
+    "file": "33-spicy-minced-pork-noodles.png",
+    "name": "香辣肉末汤面",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["猪肉", "面条"],
+    "taste": ["香辣"]
+  },
+  {
+    "id": "category-ref-20260825-34",
+    "file": "34-braised-pork-mushroom-rice.png",
+    "name": "香菇卤肉饭",
+    "cuisine": "家常菜",
+    "method": "焖",
+    "dishType": "主食",
+    "ingredients": ["猪肉", "米饭", "香菇"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260825-35",
+    "file": "35-wonton-soup.png",
+    "name": "紫菜馄饨汤",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "汤羹",
+    "ingredients": ["猪肉", "紫菜", "馄饨皮"],
+    "taste": ["清鲜"]
+  }
+]

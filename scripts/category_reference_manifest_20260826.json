@@ -1,0 +1,382 @@
+[
+  {
+    "id": "category-ref-20260826-01",
+    "file": "01-cabbage-mushroom-tofu-soup.png",
+    "name": "白菜香菇豆腐汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["豆腐", "白菜", "香菇", "胡萝卜"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260826-02",
+    "file": "02-snow-pea-wood-ear-stir-fry.png",
+    "name": "荷兰豆木耳炒胡萝卜",
+    "cuisine": "家常菜",
+    "method": "炒",
+    "dishType": "热菜",
+    "ingredients": ["荷兰豆", "木耳", "胡萝卜", "大蒜"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260826-03",
+    "file": "03-cold-yuba-wood-ear-platter.png",
+    "name": "凉拌木耳腐竹拼盘",
+    "cuisine": "家常菜",
+    "method": "凉拌",
+    "dishType": "凉菜",
+    "ingredients": ["木耳", "腐竹", "黄瓜", "胡萝卜"],
+    "taste": ["酸辣"]
+  },
+  {
+    "id": "category-ref-20260826-04",
+    "file": "04-steamed-mushroom-tofu-rolls.png",
+    "name": "香菇蒸豆皮卷",
+    "cuisine": "家常菜",
+    "method": "蒸",
+    "dishType": "蒸菜",
+    "ingredients": ["豆皮", "香菇", "豆腐"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-05",
+    "file": "05-tofu-vegetable-dumplings.png",
+    "name": "豆腐蔬菜饺子",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["豆腐", "白菜", "香菇", "饺子皮"],
+    "taste": ["鲜香"]
+  },
+  {
+    "id": "category-ref-20260826-06",
+    "file": "06-mushroom-vegetable-buns.png",
+    "name": "香菇素菜包子",
+    "cuisine": "家常菜",
+    "method": "蒸",
+    "dishType": "主食",
+    "ingredients": ["香菇", "白菜", "胡萝卜", "面粉"],
+    "taste": ["鲜香"]
+  },
+  {
+    "id": "category-ref-20260826-07",
+    "file": "07-beef-tofu-skin-rice-noodles.png",
+    "name": "牛肉豆皮米粉",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["牛肉", "米粉", "豆皮"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-08",
+    "file": "08-corn-potato-rib-stew.png",
+    "name": "玉米土豆炖排骨",
+    "cuisine": "家常菜",
+    "method": "炖",
+    "dishType": "热菜",
+    "ingredients": ["排骨", "土豆", "玉米", "胡萝卜", "豆角"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-09",
+    "file": "09-tomato-egg-beef-rice-bowl.png",
+    "name": "番茄鸡蛋牛肉盖饭",
+    "cuisine": "家常菜",
+    "method": "烩",
+    "dishType": "主食",
+    "ingredients": ["米饭", "牛肉", "鸡蛋", "番茄", "土豆"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-10",
+    "file": "10-sausage-potato-mushroom-rice.png",
+    "name": "腊肠土豆香菇焖饭",
+    "cuisine": "家常菜",
+    "method": "焖",
+    "dishType": "主食",
+    "ingredients": ["腊肠", "米饭", "土豆", "香菇"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-11",
+    "file": "11-tomato-tofu-mushroom-soup.png",
+    "name": "番茄豆腐菌菇汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["番茄", "豆腐", "金针菇", "青菜"],
+    "taste": ["酸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-12",
+    "file": "12-mixed-mushroom-tofu-soup.png",
+    "name": "什锦菌菇豆腐汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["香菇", "金针菇", "木耳", "豆腐", "青菜"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260826-13",
+    "file": "13-winter-melon-vermicelli-meatball-soup.png",
+    "name": "冬瓜肉丸汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["冬瓜", "猪肉", "粉丝", "胡萝卜"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260826-14",
+    "file": "14-garlic-leafy-greens.png",
+    "name": "蒜蓉青菜",
+    "cuisine": "家常菜",
+    "method": "炒",
+    "dishType": "热菜",
+    "ingredients": ["青菜", "大蒜", "辣椒"],
+    "taste": ["蒜香"]
+  },
+  {
+    "id": "category-ref-20260826-15",
+    "file": "15-spicy-cauliflower.png",
+    "name": "香辣干锅花菜",
+    "cuisine": "家常菜",
+    "method": "炒",
+    "dishType": "热菜",
+    "ingredients": ["花菜", "辣椒", "大蒜"],
+    "taste": ["香辣"]
+  },
+  {
+    "id": "category-ref-20260826-16",
+    "file": "16-mushroom-bok-choy.png",
+    "name": "香菇青菜",
+    "cuisine": "家常菜",
+    "method": "炒",
+    "dishType": "热菜",
+    "ingredients": ["香菇", "青菜"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-17",
+    "file": "17-cold-kelp-salad.png",
+    "name": "凉拌海带丝",
+    "cuisine": "家常菜",
+    "method": "凉拌",
+    "dishType": "凉菜",
+    "ingredients": ["海带", "胡萝卜", "香菜"],
+    "taste": ["酸辣"]
+  },
+  {
+    "id": "category-ref-20260826-18",
+    "file": "18-cucumber-yuba-wood-ear-salad.png",
+    "name": "黄瓜拌腐竹",
+    "cuisine": "家常菜",
+    "method": "凉拌",
+    "dishType": "凉菜",
+    "ingredients": ["腐竹", "黄瓜", "木耳", "大蒜"],
+    "taste": ["清爽"]
+  },
+  {
+    "id": "category-ref-20260826-19",
+    "file": "19-mixed-vegetable-salad.png",
+    "name": "什锦蔬菜沙拉",
+    "cuisine": "家常菜",
+    "method": "凉拌",
+    "dishType": "凉菜",
+    "ingredients": ["生菜", "黄瓜", "番茄", "紫甘蓝", "玉米"],
+    "taste": ["清爽"]
+  },
+  {
+    "id": "category-ref-20260826-20",
+    "file": "20-steamed-vegetarian-chicken.png",
+    "name": "清蒸素鸡",
+    "cuisine": "家常菜",
+    "method": "蒸",
+    "dishType": "蒸菜",
+    "ingredients": ["素鸡", "香菇"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-21",
+    "file": "21-steamed-tofu.png",
+    "name": "清蒸豆腐",
+    "cuisine": "家常菜",
+    "method": "蒸",
+    "dishType": "蒸菜",
+    "ingredients": ["豆腐", "青菜", "香菇", "胡萝卜"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260826-22",
+    "file": "22-cold-tofu-skin-vegetable-rolls.png",
+    "name": "凉拌豆皮卷",
+    "cuisine": "家常菜",
+    "method": "凉拌",
+    "dishType": "凉菜",
+    "ingredients": ["豆皮", "香菇", "胡萝卜", "青菜"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-23",
+    "file": "23-pan-fried-tofu-skin-rolls.png",
+    "name": "香煎豆皮卷",
+    "cuisine": "家常菜",
+    "method": "煎",
+    "dishType": "热菜",
+    "ingredients": ["豆皮", "豆腐", "青菜", "香菇"],
+    "taste": ["酥香"]
+  },
+  {
+    "id": "category-ref-20260826-24",
+    "file": "24-colorful-vegetable-dumplings.png",
+    "name": "彩蔬素饺",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["白菜", "胡萝卜", "香菇", "饺子皮"],
+    "taste": ["鲜香"]
+  },
+  {
+    "id": "category-ref-20260826-25",
+    "file": "25-pan-fried-vegetable-buns.png",
+    "name": "粉丝素菜生煎包",
+    "cuisine": "家常菜",
+    "method": "煎",
+    "dishType": "主食",
+    "ingredients": ["粉丝", "白菜", "香菇", "面粉"],
+    "taste": ["酥香"]
+  },
+  {
+    "id": "category-ref-20260826-26",
+    "file": "26-wholegrain-vegetable-buns.png",
+    "name": "全麦素菜包子",
+    "cuisine": "家常菜",
+    "method": "蒸",
+    "dishType": "主食",
+    "ingredients": ["全麦面粉", "豆腐", "菠菜", "粉丝", "香菇"],
+    "taste": ["鲜香"]
+  },
+  {
+    "id": "category-ref-20260826-27",
+    "file": "27-herbal-beef-soup.png",
+    "name": "黄芪红枣牛肉汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["牛肉", "黄芪", "红枣", "枸杞"],
+    "taste": ["醇香"]
+  },
+  {
+    "id": "category-ref-20260826-28",
+    "file": "28-spicy-beef-rice-noodles.png",
+    "name": "香辣牛肉米线",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["牛肉", "米线", "青菜", "辣椒"],
+    "taste": ["香辣"]
+  },
+  {
+    "id": "category-ref-20260826-29",
+    "file": "29-tomato-potato-rib-stew.png",
+    "name": "番茄土豆炖排骨",
+    "cuisine": "家常菜",
+    "method": "炖",
+    "dishType": "热菜",
+    "ingredients": ["排骨", "番茄", "土豆", "胡萝卜", "洋葱"],
+    "taste": ["酸香"]
+  },
+  {
+    "id": "category-ref-20260826-30",
+    "file": "30-winter-melon-coix-rib-soup.png",
+    "name": "冬瓜薏米排骨汤",
+    "cuisine": "家常菜",
+    "method": "煮汤",
+    "dishType": "汤羹",
+    "ingredients": ["排骨", "冬瓜", "薏米", "香菇"],
+    "taste": ["清鲜"]
+  },
+  {
+    "id": "category-ref-20260826-31",
+    "file": "31-black-pepper-onion-beef-rice.png",
+    "name": "黑椒洋葱牛肉盖饭",
+    "cuisine": "家常菜",
+    "method": "炒",
+    "dishType": "主食",
+    "ingredients": ["牛肉", "洋葱", "米饭", "青椒"],
+    "taste": ["黑椒"]
+  },
+  {
+    "id": "category-ref-20260826-32",
+    "file": "32-kung-pao-chicken-rice.png",
+    "name": "宫保鸡丁盖饭",
+    "cuisine": "川菜",
+    "method": "炒",
+    "dishType": "主食",
+    "ingredients": ["鸡肉", "花生", "米饭", "辣椒"],
+    "taste": ["香辣"]
+  },
+  {
+    "id": "category-ref-20260826-33",
+    "file": "33-mapo-tofu-rice.png",
+    "name": "麻婆豆腐盖饭",
+    "cuisine": "川菜",
+    "method": "烧",
+    "dishType": "主食",
+    "ingredients": ["豆腐", "猪肉", "米饭", "辣椒"],
+    "taste": ["麻辣"]
+  },
+  {
+    "id": "category-ref-20260826-34",
+    "file": "34-di-san-xian-rice.png",
+    "name": "地三鲜盖饭",
+    "cuisine": "东北菜",
+    "method": "炒",
+    "dishType": "主食",
+    "ingredients": ["茄子", "土豆", "青椒", "米饭"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-35",
+    "file": "35-mushroom-chicken-claypot-rice.png",
+    "name": "香菇鸡肉煲仔饭",
+    "cuisine": "粤菜",
+    "method": "煲",
+    "dishType": "主食",
+    "ingredients": ["鸡肉", "米饭", "香菇", "胡萝卜"],
+    "taste": ["咸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-36",
+    "file": "36-curry-potato-beef-rice.png",
+    "name": "咖喱土豆牛肉烩饭",
+    "cuisine": "家常菜",
+    "method": "烩",
+    "dishType": "主食",
+    "ingredients": ["牛肉", "土豆", "米饭", "胡萝卜", "豌豆"],
+    "taste": ["咖喱"]
+  },
+  {
+    "id": "category-ref-20260826-37",
+    "file": "37-tomato-beef-rice-soup.png",
+    "name": "番茄牛肉泡饭",
+    "cuisine": "家常菜",
+    "method": "煮",
+    "dishType": "主食",
+    "ingredients": ["牛肉", "米饭", "番茄", "土豆"],
+    "taste": ["酸鲜"]
+  },
+  {
+    "id": "category-ref-20260826-38",
+    "file": "38-bacon-potato-mushroom-rice.png",
+    "name": "腊肉土豆香菇焖饭",
+    "cuisine": "家常菜",
+    "method": "焖",
+    "dishType": "主食",
+    "ingredients": ["腊肉", "米饭", "土豆", "香菇", "豌豆"],
+    "taste": ["咸鲜"]
+  }
+]

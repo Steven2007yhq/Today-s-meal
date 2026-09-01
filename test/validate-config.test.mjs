@@ -4,7 +4,7 @@ import { INSECURE_DEFAULTS } from '../server/config.mjs'
 import { assertStartupConfig, collectConfigProblems } from '../server/validate-config.mjs'
 
 function safeConfig(overrides = {}) {
-  return {
+  const base = {
     nodeEnv: 'production',
     isDevelopment: false,
     uploadToken: 'upload-token-that-is-longer-than-24-characters',
@@ -14,9 +14,10 @@ function safeConfig(overrides = {}) {
       exposeDevCode: false,
     },
     ai: { assignmentSecret: 'assignment-secret-longer-than-24-characters' },
+    billing: { adminToken: 'billing-admin-token-longer-than-24-characters' },
     minio: { accessKey: 'production-access', secretKey: 'production-secret-longer-than-24-characters' },
-    ...overrides,
   }
+  return { ...base, ...overrides, billing: { ...base.billing, ...(overrides.billing || {}) } }
 }
 
 test('production-safe configuration passes startup validation', () => {
@@ -31,6 +32,7 @@ test('insecure defaults fail closed outside explicit development', () => {
     databaseUrl: INSECURE_DEFAULTS.databaseUrl,
     auth: { secret: INSECURE_DEFAULTS.authSecret, exposeDevCode: true },
     ai: { assignmentSecret: INSECURE_DEFAULTS.assignmentSecret },
+    billing: { adminToken: INSECURE_DEFAULTS.billingAdminToken },
     minio: { accessKey: INSECURE_DEFAULTS.minioAccessKey, secretKey: INSECURE_DEFAULTS.minioSecretKey },
   })
   assert.ok(collectConfigProblems(config).length >= 6)

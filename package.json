@@ -1,6 +1,6 @@
 {
   "name": "jin-tian-chi-sha",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "author": "好吃的今天产品团队",
@@ -18,6 +18,9 @@
     "pack:win": "npm run build && electron-builder --win nsis",
     "recipes:build": "python scripts/build_dish_library.py --sources scripts/recipe_sources.json --output src/data/crawledDishLibrary.json",
     "catalog:build": "npm run db:migrate && node scripts/build_figure_catalog.mjs",
+    "catalog:source:howtocook": "node scripts/import_howtocook_catalog.mjs",
+    "catalog:quality": "node scripts/seed_expanded_catalog.mjs --dry-run",
+    "catalog:seed": "npm run db:migrate && node scripts/seed_expanded_catalog.mjs",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
     "db:migrate": "node server/migrate.mjs",
@@ -25,6 +28,8 @@
     "server:dev": "node --watch server/index.mjs",
     "images:migrate": "node scripts/upload_local_dish_images.mjs",
     "images:figure": "node scripts/upload_figure_images.mjs",
+    "images:category": "node scripts/upload_category_reference_images.mjs",
+    "images:coverage": "node scripts/audit_dish_image_coverage.mjs",
     "catalog:seasonal": "node scripts/sync_seasonal_catalog.mjs",
     "docs:pdf": "python scripts/build_help_pdfs.py"
   },
